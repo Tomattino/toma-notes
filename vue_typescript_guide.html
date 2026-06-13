@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeScript + Vue 3 教材</title>
+<style>
+  :root {
+    --bg:#0d0f18;--surface:#141720;--surface2:#1a1e2e;--border:#252a3d;
+    --accent:#4f9eff;--accent2:#ff6b6b;--accent3:#4ade80;
+    --yellow:#fbbf24;--purple:#a78bfa;--orange:#fb923c;
+    --ts:#3178c6;--vue:#42b883;
+    --text:#e2e8f0;--muted:#64748b;--code-bg:#0a0c14;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.75;padding:48px 24px;}
+  .container{max-width:920px;margin:0 auto;}
+  header{border-bottom:2px solid var(--ts);padding-bottom:28px;margin-bottom:48px;}
+  header h1{font-size:30px;font-weight:800;letter-spacing:-0.5px;}
+  header h1 .ts{color:var(--ts);}header h1 .vue{color:var(--vue);}
+  header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  section{margin-bottom:64px;}
+  h2{font-size:20px;font-weight:700;padding-left:14px;border-left:3px solid var(--ts);margin-bottom:16px;}
+  h2.vue{border-color:var(--vue);}h2.yellow{border-color:var(--yellow);}
+  h2.red{border-color:var(--accent2);}h2.gray{border-color:var(--muted);}
+  h2.purple{border-color:var(--purple);}
+  h3{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:28px 0 10px;}
+  p{margin-bottom:12px;line-height:1.8;}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:'Fira Code','Courier New',monospace;font-size:13.5px;line-height:1.9;margin:10px 0;}
+  .kw{color:#61b8ff;font-weight:600;}
+  .str{color:#4ade80;}
+  .num{color:#fbbf24;}
+  .cmt{color:#4a5568;font-style:italic;}
+  .type{color:#a78bfa;font-weight:600;}
+  .tag{color:#fb923c;font-weight:600;}
+  .attr{color:#a78bfa;}
+  .ts-kw{color:#3178c6;font-weight:600;}
+  .fn{color:#fbbf24;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  th{background:var(--surface2);color:var(--muted);font-weight:700;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.8;}
+  .warn strong{color:var(--yellow);display:block;margin-bottom:6px;}
+  .tip{background:rgba(49,120,198,.07);border:1px solid rgba(49,120,198,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;color:#93c5fd;line-height:1.8;}
+  .tip::before{content:"💡 ";}
+  .bad{color:var(--accent2);}.good{color:var(--accent3);}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  @media(max-width:600px){.compare{grid-template-columns:1fr;}}
+  .cbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .cbox-title{font-size:13px;font-weight:700;margin-bottom:10px;}
+  .cbox-title.bad{color:var(--accent2);}.cbox-title.good{color:var(--accent3);}
+  .file-tree{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-family:'Fira Code','Courier New',monospace;font-size:13px;line-height:1.9;}
+  .file-tree .dir{color:var(--accent);}
+  .file-tree .note{color:var(--muted);}
+  code{font-family:'Fira Code','Courier New',monospace;font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--ts);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1><span class="ts">TypeScript</span> + <span class="vue">Vue 3</span> 教材</h1>
+  <p>型の基礎からVueとの組み合わせまで。Vue教材の内容を前提とする。</p>
+</header>
+
+<!-- ===== TypeScriptとは ===== -->
+<section>
+  <h2>TypeScriptとは何か</h2>
+  <p>TypeScript（TS）はJavaScriptに<strong>型</strong>を追加した言語。書いたコードはブラウザ実行前にJavaScriptに変換（トランスパイル）される。</p>
+  <p>型を書くことで「この変数には文字列しか入らない」「この関数は数値を返す」というルールをコードで表現できる。VSCodeが型情報を使ってリアルタイムにエラーを教えてくれる。</p>
+
+  <div class="compare">
+    <div class="cbox">
+      <div class="cbox-title bad">JavaScript — 実行するまでエラーに気づかない</div>
+      <pre style="font-size:12px;margin:0"><span class="kw">function</span> <span class="fn">double</span>(n) {
+  <span class="kw">return</span> n * <span class="num">2</span>
+}
+
+<span class="fn">double</span>(<span class="str">'hello'</span>)  <span class="cmt">// NaN になるが実行まで気づかない</span></pre>
+    </div>
+    <div class="cbox">
+      <div class="cbox-title good">TypeScript — 書いた瞬間にエラーがわかる</div>
+      <pre style="font-size:12px;margin:0"><span class="kw">function</span> <span class="fn">double</span>(n: <span class="type">number</span>): <span class="type">number</span> {
+  <span class="kw">return</span> n * <span class="num">2</span>
+}
+
+<span class="fn">double</span>(<span class="str">'hello'</span>)
+<span class="cmt">// ↑ エラー: string は number に代入できない</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 基本の型 ===== -->
+<section>
+  <h2>基本の型</h2>
+
+  <h3>プリミティブ型</h3>
+  <pre><span class="kw">const</span> name:    <span class="type">string</span>  = <span class="str">'山田'</span>
+<span class="kw">const</span> age:     <span class="type">number</span>  = <span class="num">32</span>
+<span class="kw">const</span> isAdmin: <span class="type">boolean</span> = <span class="kw">true</span>
+<span class="kw">const</span> nothing: <span class="type">null</span>    = <span class="kw">null</span>
+<span class="kw">const</span> empty:   <span class="type">undefined</span> = <span class="kw">undefined</span></pre>
+
+  <h3>配列</h3>
+  <pre><span class="kw">const</span> names:   <span class="type">string</span>[]  = [<span class="str">'山田'</span>, <span class="str">'田中'</span>]
+<span class="kw">const</span> scores:  <span class="type">number</span>[]  = [<span class="num">90</span>, <span class="num">85</span>, <span class="num">70</span>]
+
+<span class="cmt">// ジェネリクス書き方（同じ意味）</span>
+<span class="kw">const</span> names2: <span class="type">Array</span>&lt;<span class="type">string</span>&gt; = [<span class="str">'山田'</span>]</pre>
+
+  <h3>オブジェクト型</h3>
+  <pre><span class="cmt">// インライン</span>
+<span class="kw">const</span> user: { name: <span class="type">string</span>; age: <span class="type">number</span> } = { name: <span class="str">'山田'</span>, age: <span class="num">32</span> }
+
+<span class="cmt">// type エイリアス（名前をつけて再利用する）</span>
+<span class="ts-kw">type</span> <span class="type">User</span> = {
+  id:    <span class="type">number</span>
+  name:  <span class="type">string</span>
+  email: <span class="type">string</span>
+  age?:  <span class="type">number</span>   <span class="cmt">// ? をつけるとオプション（省略可）</span>
+}
+
+<span class="kw">const</span> user: <span class="type">User</span> = { id: <span class="num">1</span>, name: <span class="str">'山田'</span>, email: <span class="str">'a@example.com'</span> }
+
+<span class="cmt">// interface（オブジェクトの型定義。typeと似ているが継承できる）</span>
+<span class="ts-kw">interface</span> <span class="type">Recipe</span> {
+  name:   <span class="type">string</span>
+  img:    <span class="type">string</span>
+  energy: <span class="type">number</span>
+}</pre>
+
+  <table>
+    <tr><th></th><th>type</th><th>interface</th></tr>
+    <tr><td>オブジェクトの型定義</td><td>できる</td><td>できる</td></tr>
+    <tr><td>ユニオン型・交差型</td><td>できる</td><td>できない</td></tr>
+    <tr><td>継承（extends）</td><td>交差型で似たことができる</td><td>できる</td></tr>
+    <tr><td>現場での傾向</td><td>型エイリアス全般に使う</td><td>オブジェクトの型で拡張が必要なとき</td></tr>
+  </table>
+
+  <h3>ユニオン型 — 複数の型のどれか</h3>
+  <pre><span class="ts-kw">type</span> <span class="type">Status</span> = <span class="str">'active'</span> | <span class="str">'inactive'</span> | <span class="str">'pending'</span>  <span class="cmt">// 文字列リテラルのユニオン</span>
+<span class="ts-kw">type</span> <span class="type">ID</span>     = <span class="type">number</span> | <span class="type">string</span>                       <span class="cmt">// 型のユニオン</span>
+
+<span class="kw">let</span> status: <span class="type">Status</span> = <span class="str">'active'</span>
+status = <span class="str">'deleted'</span>  <span class="cmt">// エラー: 'deleted' は Status 型にない</span></pre>
+
+  <h3>特殊な型</h3>
+  <pre><span class="cmt">// any — 型チェックをオフにする（なるべく使わない）</span>
+<span class="kw">const</span> data: <span class="type">any</span> = <span class="str">'なんでも入る'</span>
+
+<span class="cmt">// unknown — anyより安全。使う前に型チェックが必要</span>
+<span class="kw">const</span> input: <span class="type">unknown</span> = getUserInput()
+<span class="kw">if</span> (<span class="kw">typeof</span> input === <span class="str">'string'</span>) {
+  console.log(input.toUpperCase())  <span class="cmt">// ここで初めて文字列として使える</span>
+}
+
+<span class="cmt">// void — 戻り値がない関数</span>
+<span class="kw">function</span> <span class="fn">log</span>(msg: <span class="type">string</span>): <span class="type">void</span> {
+  console.log(msg)
+}
+
+<span class="cmt">// never — 絶対に到達しない（無限ループ・必ずthrowする関数）</span>
+<span class="kw">function</span> <span class="fn">throwError</span>(msg: <span class="type">string</span>): <span class="type">never</span> {
+  <span class="kw">throw new</span> Error(msg)
+}</pre>
+</section>
+
+<!-- ===== 関数の型 ===== -->
+<section>
+  <h2>関数の型定義</h2>
+  <pre><span class="cmt">// 引数と戻り値に型をつける</span>
+<span class="kw">function</span> <span class="fn">add</span>(a: <span class="type">number</span>, b: <span class="type">number</span>): <span class="type">number</span> {
+  <span class="kw">return</span> a + b
+}
+
+<span class="cmt">// アロー関数</span>
+<span class="kw">const</span> <span class="fn">multiply</span> = (a: <span class="type">number</span>, b: <span class="type">number</span>): <span class="type">number</span> => a * b
+
+<span class="cmt">// オプション引数とデフォルト値</span>
+<span class="kw">function</span> <span class="fn">greet</span>(name: <span class="type">string</span>, greeting?: <span class="type">string</span>): <span class="type">string</span> {
+  <span class="kw">return</span> <span class="str">`${greeting ?? 'こんにちは'}, ${name}`</span>
+}
+
+<span class="cmt">// 非同期関数 — 戻り値はPromise&lt;T&gt;</span>
+<span class="kw">async function</span> <span class="fn">fetchUser</span>(id: <span class="type">number</span>): <span class="type">Promise</span>&lt;<span class="type">User</span>&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`/api/users/${id}`</span>)
+  <span class="kw">return</span> res.json()
+}</pre>
+
+  <h3>ジェネリクス — 型を引数にする</h3>
+  <p>「具体的な型は使う側が決める」という仕組み。汎用的な関数やコンポーネントで使う。</p>
+  <pre><span class="cmt">// T は型パラメータ。呼び出し時に具体的な型が決まる</span>
+<span class="kw">function</span> <span class="fn">first</span>&lt;<span class="type">T</span>&gt;(arr: <span class="type">T</span>[]): <span class="type">T</span> | undefined {
+  <span class="kw">return</span> arr[<span class="num">0</span>]
+}
+
+<span class="fn">first</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])         <span class="cmt">// 戻り値はnumber | undefined</span>
+<span class="fn">first</span>([<span class="str">'a'</span>, <span class="str">'b'</span>])        <span class="cmt">// 戻り値はstring | undefined</span>
+
+<span class="cmt">// API レスポンスをジェネリクスで表現する実務的な例</span>
+<span class="ts-kw">type</span> <span class="type">ApiResponse</span>&lt;<span class="type">T</span>&gt; = {
+  data:    <span class="type">T</span>
+  status:  <span class="type">number</span>
+  message: <span class="type">string</span>
+}
+
+<span class="ts-kw">type</span> <span class="type">UserResponse</span>   = <span class="type">ApiResponse</span>&lt;<span class="type">User</span>&gt;
+<span class="ts-kw">type</span> <span class="type">RecipeResponse</span> = <span class="type">ApiResponse</span>&lt;<span class="type">Recipe</span>[]&gt;</pre>
+</section>
+
+<!-- ===== Vue + TypeScript ===== -->
+<section>
+  <h2 class="vue">Vue 3 + TypeScript のセットアップ</h2>
+
+  <pre><span class="cmt"># TypeScript対応のVueプロジェクトを作成</span>
+npm create vite@latest my-app -- --template vue-ts
+<span class="kw">cd</span> my-app && npm install</pre>
+
+  <div class="file-tree">
+    <span class="dir">src/</span><br>
+    ├── <span class="file vue">App.vue</span>              <span class="note">← &lt;script setup lang="ts"&gt; で書く</span><br>
+    ├── <span class="file">main.ts</span>              <span class="note">← 拡張子が .ts になる</span><br>
+    ├── <span class="dir">types/</span>               <span class="note">← 型定義ファイルをまとめる</span><br>
+    │   └── <span class="file">index.ts</span>         <span class="note">← type / interface をここで定義・export</span><br>
+    └── <span class="dir">stores/</span><br>
+        └── <span class="file">recipeStore.ts</span>
+  </div>
+
+  <pre><span class="cmt">&lt;!-- .vueファイルでTypeScriptを使う --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="str">"ts"</span><span class="tag">&gt;</span>  <span class="cmt">&lt;!-- lang="ts" をつけるだけ --&gt;</span>
+<span class="kw">import</span> { ref } <span class="kw">from</span> <span class="str">'vue'</span>
+
+<span class="kw">const</span> count: <span class="type">number</span> = <span class="fn">ref</span>(<span class="num">0</span>)  <span class="cmt">// 型アノテーションをつけられる</span>
+<span class="tag">&lt;/script&gt;</span></pre>
+</section>
+
+<!-- ===== ref/reactive の型定義 ===== -->
+<section>
+  <h2 class="vue">ref / reactive の型定義</h2>
+
+  <h3>ref の型推論と明示的な型定義</h3>
+  <pre><span class="cmt">// 型推論 — 初期値から自動で型が決まる</span>
+<span class="kw">const</span> count  = <span class="fn">ref</span>(<span class="num">0</span>)       <span class="cmt">// Ref&lt;number&gt;</span>
+<span class="kw">const</span> name   = <span class="fn">ref</span>(<span class="str">''</span>)      <span class="cmt">// Ref&lt;string&gt;</span>
+
+<span class="cmt">// 明示的に型を指定する（初期値がnullやundefinedのとき必須）</span>
+<span class="kw">const</span> user   = <span class="fn">ref</span>&lt;<span class="type">User</span> | <span class="kw">null</span>&gt;(<span class="kw">null</span>)
+<span class="kw">const</span> items  = <span class="fn">ref</span>&lt;<span class="type">Recipe</span>[]&gt;([])
+
+<span class="cmt">// API取得のパターン</span>
+<span class="kw">const</span> recipes = <span class="fn">ref</span>&lt;<span class="type">Recipe</span>[]&gt;([])
+
+<span class="fn">onMounted</span>(<span class="kw">async</span> () => {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'/api/recipes'</span>)
+  recipes.value = <span class="kw">await</span> res.<span class="fn">json</span>() <span class="kw">as</span> <span class="type">Recipe</span>[]  <span class="cmt">// as でキャスト</span>
+})</pre>
+
+  <h3>reactive の型定義</h3>
+  <pre><span class="ts-kw">type</span> <span class="type">FormState</span> = {
+  username: <span class="type">string</span>
+  email:    <span class="type">string</span>
+  age:      <span class="type">number</span>
+}
+
+<span class="kw">const</span> form = <span class="fn">reactive</span>&lt;<span class="type">FormState</span>&gt;({
+  username: <span class="str">''</span>,
+  email:    <span class="str">''</span>,
+  age:      <span class="num">0</span>,
+})</pre>
+</section>
+
+<!-- ===== propsの型定義 ===== -->
+<section>
+  <h2 class="vue">props の型定義</h2>
+
+  <h3>型ベースの定義（推奨）</h3>
+  <pre><span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="str">"ts"</span><span class="tag">&gt;</span>
+<span class="cmt">// withDefaultsでデフォルト値を指定する</span>
+<span class="kw">interface</span> <span class="type">Props</span> {
+  dish:       <span class="type">Recipe</span>
+  showDetail?: <span class="type">boolean</span>
+  maxItems?:  <span class="type">number</span>
+}
+
+<span class="kw">const</span> props = <span class="fn">withDefaults</span>(<span class="fn">defineProps</span>&lt;<span class="type">Props</span>&gt;(), {
+  showDetail: <span class="kw">false</span>,
+  maxItems:   <span class="num">10</span>,
+})
+<span class="tag">&lt;/script&gt;</span></pre>
+
+  <h3>emitの型定義</h3>
+  <pre><span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="str">"ts"</span><span class="tag">&gt;</span>
+<span class="kw">const</span> emit = <span class="fn">defineEmits</span>&lt;{
+  click:               [payload: { id: <span class="type">number</span> }]
+  <span class="str">'update:modelValue'</span>: [value: <span class="type">string</span>]
+}&gt;()
+
+emit(<span class="str">'click'</span>, { id: <span class="num">1</span> })
+<span class="tag">&lt;/script&gt;</span></pre>
+</section>
+
+<!-- ===== Piniaの型定義 ===== -->
+<section>
+  <h2 class="vue">Pinia の型定義</h2>
+  <pre><span class="cmt">// src/stores/recipeStore.ts</span>
+<span class="kw">import</span> { defineStore } <span class="kw">from</span> <span class="str">'pinia'</span>
+<span class="kw">import</span> { ref, computed } <span class="kw">from</span> <span class="str">'vue'</span>
+<span class="kw">import</span> <span class="kw">type</span> { Recipe } <span class="kw">from</span> <span class="str">'../types'</span>  <span class="cmt">// 型のimportはimport typeで</span>
+
+<span class="kw">export const</span> useRecipeStore = <span class="fn">defineStore</span>(<span class="str">'recipe'</span>, () => {
+  <span class="cmt">// 型推論で十分なものはそのまま、nullを含む場合は明示的に指定</span>
+  <span class="kw">const</span> recipes      = <span class="fn">ref</span>&lt;<span class="type">Recipe</span>[]&gt;([])
+  <span class="kw">const</span> selectedKey  = <span class="fn">ref</span>&lt;<span class="type">string</span>&gt;(<span class="str">''</span>)
+  <span class="kw">const</span> isLoading    = <span class="fn">ref</span>(<span class="kw">false</span>)
+
+  <span class="kw">const</span> selectedRecipe = <span class="fn">computed</span>(
+    (): <span class="type">Recipe</span> | undefined =>
+      recipes.value.find(r => r.name === selectedKey.value)
+  )
+
+  <span class="kw">const</span> selectRecipe = (key: <span class="type">string</span>): <span class="type">void</span> => {
+    selectedKey.value = key
+  }
+
+  <span class="kw">const</span> fetchRecipes = <span class="kw">async</span> (): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt; => {
+    isLoading.value = <span class="kw">true</span>
+    <span class="kw">try</span> {
+      <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'/api/recipes'</span>)
+      recipes.value = <span class="kw">await</span> res.json()
+    } <span class="kw">finally</span> {
+      isLoading.value = <span class="kw">false</span>
+    }
+  }
+
+  <span class="kw">return</span> { recipes, selectedKey, isLoading, selectedRecipe, selectRecipe, fetchRecipes }
+})</pre>
+</section>
+
+<!-- ===== 型定義ファイルの構成 ===== -->
+<section>
+  <h2 class="yellow">型定義ファイルの構成</h2>
+  <p>アプリで使う型は <code>src/types/</code> にまとめて管理する。</p>
+
+  <pre><span class="cmt">// src/types/index.ts</span>
+
+<span class="cmt">// --- ドメインの型 ---</span>
+<span class="kw">export interface</span> <span class="type">Ingredient</span> {
+  name:     <span class="type">string</span>
+  strength: <span class="type">number</span>
+  img:      <span class="type">string</span>
+}
+
+<span class="kw">export interface</span> <span class="type">Recipe</span> {
+  name:                <span class="type">string</span>
+  img:                 <span class="type">string</span>
+  requireIngredients:  <span class="type">IngredientInDish</span>[]
+  ingredientsNumBonus: <span class="type">number</span>
+}
+
+<span class="kw">export interface</span> <span class="type">IngredientInDish</span> {
+  ingredient: <span class="type">Ingredient</span>
+  num:        <span class="type">number</span>
+}
+
+<span class="cmt">// --- APIレスポンスの型 ---</span>
+<span class="kw">export type</span> <span class="type">ApiResponse</span>&lt;<span class="type">T</span>&gt; = {
+  data:    <span class="type">T</span>
+  status:  <span class="type">number</span>
+  message: <span class="type">string</span>
+}
+
+<span class="cmt">// --- ステータス等のユニオン型 ---</span>
+<span class="kw">export type</span> <span class="type">RecipeCategory</span> = <span class="str">'curry'</span> | <span class="str">'salad'</span> | <span class="str">'dessert'</span></pre>
+</section>
+
+<!-- ===== よくある実践パターン ===== -->
+<section>
+  <h2 class="vue">よく使う実践パターン</h2>
+
+  <h3>API通信のパターン（エラーハンドリング含む）</h3>
+  <pre><span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="str">"ts"</span><span class="tag">&gt;</span>
+<span class="kw">import</span> <span class="kw">type</span> { Recipe } <span class="kw">from</span> <span class="str">'../types'</span>
+
+<span class="kw">const</span> recipes  = <span class="fn">ref</span>&lt;<span class="type">Recipe</span>[]&gt;([])
+<span class="kw">const</span> isLoading = <span class="fn">ref</span>(<span class="kw">false</span>)
+<span class="kw">const</span> error     = <span class="fn">ref</span>&lt;<span class="type">string</span> | <span class="kw">null</span>&gt;(<span class="kw">null</span>)
+
+<span class="fn">onMounted</span>(<span class="kw">async</span> () => {
+  isLoading.value = <span class="kw">true</span>
+  error.value = <span class="kw">null</span>
+  <span class="kw">try</span> {
+    <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'/api/recipes'</span>)
+    <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`HTTP error: ${res.status}`</span>)
+    recipes.value = <span class="kw">await</span> res.<span class="fn">json</span>() <span class="kw">as</span> <span class="type">Recipe</span>[]
+  } <span class="kw">catch</span> (e) {
+    error.value = e <span class="kw">instanceof</span> Error ? e.message : <span class="str">'取得に失敗しました'</span>
+  } <span class="kw">finally</span> {
+    isLoading.value = <span class="kw">false</span>
+  }
+})
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">v-if</span>=<span class="str">"isLoading"</span><span class="tag">&gt;</span>読み込み中...<span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">v-else-if</span>=<span class="str">"error"</span><span class="tag">&gt;</span>{{ error }}<span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">v-else</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;RecipeCard</span> <span class="attr">v-for</span>=<span class="str">"recipe in recipes"</span> <span class="attr">:key</span>=<span class="str">"recipe.name"</span> <span class="attr">:dish</span>=<span class="str">"recipe"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span></pre>
+
+  <h3>型ガード — 型を絞り込む</h3>
+  <pre><span class="cmt">// unknownの型を絞り込む</span>
+<span class="kw">function</span> <span class="fn">isRecipe</span>(val: <span class="type">unknown</span>): val <span class="kw">is</span> <span class="type">Recipe</span> {
+  <span class="kw">return</span> (
+    <span class="kw">typeof</span> val === <span class="str">'object'</span> &&
+    val !== <span class="kw">null</span> &&
+    <span class="str">'name'</span> <span class="kw">in</span> val &&
+    <span class="str">'img'</span> <span class="kw">in</span> val
+  )
+}
+
+<span class="kw">const</span> data: <span class="type">unknown</span> = fetchSomething()
+<span class="kw">if</span> (<span class="fn">isRecipe</span>(data)) {
+  console.log(data.name)  <span class="cmt">// ここでRecipe型として扱える</span>
+}</pre>
+
+  <h3>Refの型を別の変数に渡すとき</h3>
+  <pre><span class="kw">import</span> <span class="kw">type</span> { Ref } <span class="kw">from</span> <span class="str">'vue'</span>
+
+<span class="cmt">// 関数の引数にRefを受け取る場合</span>
+<span class="kw">function</span> <span class="fn">useRecipeFilter</span>(recipes: <span class="type">Ref</span>&lt;<span class="type">Recipe</span>[]&gt;, keyword: <span class="type">Ref</span>&lt;<span class="type">string</span>&gt;) {
+  <span class="kw">const</span> filtered = <span class="fn">computed</span>(() =>
+    recipes.value.filter(r => r.name.includes(keyword.value))
+  )
+  <span class="kw">return</span> { filtered }
+}</pre>
+</section>
+
+<!-- ===== TypeScriptのよくあるミス ===== -->
+<section>
+  <h2 class="red">よくあるミスと対処</h2>
+
+  <table>
+    <tr><th>ミス</th><th>原因</th><th>対処</th></tr>
+    <tr>
+      <td><code>Object is possibly 'null'</code></td>
+      <td>null を含む型を使う前に型チェックしていない</td>
+      <td><code>if (user.value !== null)</code> でチェックするか、<code>user.value!</code> の非nullアサーション（確実なときのみ）</td>
+    </tr>
+    <tr>
+      <td><code>Property does not exist</code></td>
+      <td>型にないプロパティにアクセスしている</td>
+      <td>型定義にプロパティを追加するか、型が合っているか確認する</td>
+    </tr>
+    <tr>
+      <td><code>any</code>を使いすぎる</td>
+      <td>型をつけるのが面倒でanyで逃げる</td>
+      <td>anyを使うと型チェックの恩恵がなくなる。unknownを使うか正しい型を定義する</td>
+    </tr>
+    <tr>
+      <td>型インポートで余分なコードが出る</td>
+      <td>型をimportするとき通常のimportを使っている</td>
+      <td><code>import type { Recipe }</code> を使う。型だけのimportであることを明示するとバンドルサイズが減る</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ===== チェックリスト ===== -->
+<section>
+  <h2 class="gray">実務チェックリスト</h2>
+  <table>
+    <tr><th>確認項目</th><th>内容</th></tr>
+    <tr><td>型定義ファイルを src/types/ にまとめているか</td><td>各ファイルにバラバラに書くと管理が難しくなる</td></tr>
+    <tr><td>any を使っていないか</td><td>型がわからないときは unknown を使って型ガードで絞り込む</td></tr>
+    <tr><td>null を含む ref に型を明示しているか</td><td>ref&lt;User | null&gt;(null) のように明示する</td></tr>
+    <tr><td>型のimportは import type を使っているか</td><td>バンドルサイズの削減と意図の明示</td></tr>
+    <tr><td>props の型定義に withDefaults を使っているか</td><td>オプションのpropsにデフォルト値を設定する</td></tr>
+    <tr><td>API レスポンスに型をつけているか</td><td>as Type でキャストするか、型ガードで安全に扱う</td></tr>
+    <tr><td>Pinia store の関数に戻り値の型をつけているか</td><td>戻り値が明確になりコンポーネントから使いやすくなる</td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>

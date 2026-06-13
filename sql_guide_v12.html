@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL 基礎教材</title>
+<style>
+  :root {
+    --bg:       #0d0f18;
+    --surface:  #141720;
+    --surface2: #1a1e2e;
+    --border:   #252a3d;
+    --accent:   #4f9eff;
+    --accent2:  #ff6b6b;
+    --accent3:  #4ade80;
+    --yellow:   #fbbf24;
+    --purple:   #a78bfa;
+    --orange:   #fb923c;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --kw:       #61b8ff;
+    --str:      #4ade80;
+    --num:      #fbbf24;
+    --cmt:      #4a5568;
+    --tbl:      #fb923c;
+    --code-bg:  #0a0c14;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    padding: 48px 24px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  header { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 48px; }
+  header h1 { font-size: 30px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  header p  { color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+  section { margin-bottom: 60px; }
+
+  h2 {
+    font-size: 20px; font-weight: 700;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+    margin-bottom: 16px; color: var(--text);
+  }
+  h2.red    { border-color: var(--accent2); }
+  h2.green  { border-color: var(--accent3); }
+  h2.yellow { border-color: var(--yellow); }
+  h2.purple { border-color: var(--purple); }
+  h2.gray   { border-color: var(--muted); }
+  h2.orange { border-color: var(--orange); }
+
+  h3 {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+    margin: 28px 0 10px;
+  }
+
+  p { margin-bottom: 12px; color: var(--text); line-height: 1.8; }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 13.5px;
+    line-height: 1.9;
+    margin: 10px 0;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .str { color: var(--str); }
+  .num { color: var(--num); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .tbl { color: var(--tbl); font-weight: 600; }
+  .note-inline { color: var(--purple); font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th {
+    background: var(--surface2); color: var(--muted);
+    font-weight: 700; padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+  .warn {
+    background: rgba(251,191,36,.07);
+    border: 1px solid rgba(251,191,36,.35);
+    border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14px;
+    line-height: 1.8;
+  }
+  .warn strong { color: var(--yellow); display: block; margin-bottom: 6px; }
+  .tip {
+    background: rgba(79,158,255,.07);
+    border: 1px solid rgba(79,158,255,.35);
+    border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14px;
+    color: #93c5fd; line-height: 1.8;
+  }
+  .tip::before { content: "💡 "; }
+  .db-note {
+    display: inline-block;
+    background: rgba(167,139,250,.15);
+    border: 1px solid rgba(167,139,250,.4);
+    border-radius: 4px; padding: 1px 8px;
+    font-size: 11px; color: var(--purple); font-weight: 700;
+    margin-left: 6px; vertical-align: middle;
+  }
+
+  /* 用語カード */
+  .term-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .term-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .term-card .term { font-weight: 700; color: var(--accent); font-size: 15px; margin-bottom: 4px; }
+  .term-card .desc { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  /* サンプルテーブル表示 */
+  .sample-table-wrap { overflow-x: auto; margin: 12px 0; }
+  .sample-table {
+    border-collapse: collapse; font-size: 13px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+  }
+  .sample-table th {
+    background: var(--surface2); color: var(--accent);
+    padding: 8px 16px; border: 1px solid var(--border);
+    font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 700;
+  }
+  .sample-table td {
+    padding: 7px 16px; border: 1px solid var(--border);
+    color: var(--text); background: var(--code-bg);
+  }
+  .sample-table td.null-val { color: var(--muted); font-style: italic; }
+  .sample-table tr:nth-child(even) td { background: var(--surface); }
+
+  /* JOINの表+表=表 図 */
+  .join-visual { margin: 20px 0; }
+  .join-equation {
+    display: flex; align-items: flex-start; gap: 16px;
+    flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .join-eq-table { }
+  .join-eq-table .label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .join-eq-table .label.result { color: var(--accent3); }
+  .join-operator {
+    font-size: 28px; color: var(--muted); font-weight: 300;
+    padding-top: 32px; flex-shrink: 0;
+  }
+  .join-highlight td { background: rgba(251,191,36,.15) !important; color: var(--yellow); }
+  .join-result-row td { background: rgba(74,222,128,.1) !important; }
+  .join-null td { color: var(--muted) !important; font-style: italic; }
+
+  /* 実行順序 */
+  .exec-order { display: flex; flex-direction: column; gap: 4px; margin: 14px 0; }
+  .exec-step {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 14px;
+  }
+  .exec-step .nbadge {
+    background: var(--accent); color: #fff; font-weight: 700;
+    font-size: 11px; min-width: 22px; height: 22px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .exec-step .clause { color: var(--kw); font-family: monospace; font-weight: 700; min-width: 110px; font-size: 13px; }
+  .exec-step .edesc  { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>SQL 基礎教材</h1>
+  <p>実務で使うSQLをまとめた学習用リファレンス</p>
+</header>
+
+<!-- ===== DBの種類 ===== -->
+<section>
+  <h2 class="gray">はじめに — 代表的なデータベースの種類</h2>
+  <p>「SQL」はデータベースを操作するための言語だが、DBの種類によって構文・関数・機能に差異がある。同じSQLでも動かないケースがあるため、どのDBを使っているかを常に意識する。</p>
+  <p><strong>この教材はMySQL 8.0以降をベースに記載する。</strong> 差分はMySQL / PostgreSQL / SQLite比較で補足し、その他のDBは存在の紹介にとどめる。</p>
+
+  <h3>主要なリレーショナルDB（SQL）</h3>
+  <table>
+    <tr><th>DB名</th><th>特徴</th><th>よく使われる場面</th></tr>
+    <tr><td><strong>MySQL</strong></td><td>世界で最も広く使われるOSS。Web系に多い</td><td>WebアプリのバックエンドDB全般</td></tr>
+    <tr><td><strong>PostgreSQL</strong></td><td>SQL標準への準拠度が高くJSON・配列型など機能が豊富</td><td>複雑なクエリ・分析系・DWH連携</td></tr>
+    <tr><td><strong>SQLite</strong></td><td>ファイル1つで動くDB。サーバー不要</td><td>モバイルアプリ・開発/テスト環境・組み込み</td></tr>
+    <tr><td><strong>Oracle Database</strong></td><td>商用DBの老舗。高機能・高信頼。大企業に多い</td><td>基幹システム・金融・官公庁</td></tr>
+    <tr><td><strong>SQL Server</strong>（Microsoft）</td><td>Windowsとの親和性が高い商用DB</td><td>Windows環境・Microsoftスタックのシステム</td></tr>
+    <tr><td><strong>MariaDB</strong></td><td>MySQLからフォーク。互換性が高い</td><td>MySQLの代替として使われることがある</td></tr>
+  </table>
+
+  <h3>クラウド・分析系DB（存在を知っておく）</h3>
+  <table>
+    <tr><th>DB名</th><th>特徴</th><th>備考</th></tr>
+    <tr><td><strong>Amazon Redshift</strong></td><td>AWSのクラウドDWH。PostgreSQL互換</td><td>大量データの分析・BIツール連携</td></tr>
+    <tr><td><strong>Google BigQuery</strong></td><td>GoogleのクラウドDWH。サーバーレス</td><td>SQL構文は使えるがDDLの概念が異なる</td></tr>
+    <tr><td><strong>Snowflake</strong></td><td>マルチクラウド対応のクラウドDWH</td><td>PostgreSQL方言に近い</td></tr>
+    <tr><td><strong>Amazon Aurora</strong></td><td>MySQL/PostgreSQL互換のマネージドDB</td><td>AWSでMySQLを使う場合によく選ばれる</td></tr>
+    <tr><td><strong>PlanetScale</strong></td><td>MySQLベースのサーバーレスDB</td><td>最近のWebアプリで増えている</td></tr>
+    <tr><td><strong>CockroachDB</strong></td><td>PostgreSQL互換の分散DB</td><td>グローバル分散が必要なシステム向け</td></tr>
+  </table>
+  <div class="tip">Oracle・SQL Serverは専用の構文・ツールが多く、この教材の内容がそのまま使えない部分がある。それぞれ専用の学習が必要。</div>
+</section>
+
+<!-- ===== 用語説明 ===== -->
+<section>
+  <h2 class="gray">はじめに — 基本用語</h2>
+  <p>SQLを学ぶ前に、よく出てくる用語を押さえておく。</p>
+  <div class="term-grid">
+    <div class="term-card">
+      <div class="term">データベース（DB）</div>
+      <div class="desc">データをまとめて管理する入れ物。Excelのブック全体に相当する。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">テーブル</div>
+      <div class="desc">データを格納する表。Excelのシートに相当する。DBの中に複数存在する。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">カラム（列）</div>
+      <div class="desc">テーブルの縦方向。「名前」「年齢」などのデータの種類を定義する。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">レコード（行）</div>
+      <div class="desc">テーブルの横方向。1件分のデータ。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">主キー（PK）</div>
+      <div class="desc">レコードを一意に識別するカラム。通常は id。重複・NULLは不可。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">外部キー（FK）</div>
+      <div class="desc">別テーブルの主キーを参照するカラム。テーブル間の紐づけに使う。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">NULL</div>
+      <div class="desc">値が存在しないことを表す特殊な値。0や空文字とは別物。</div>
+    </div>
+    <div class="term-card">
+      <div class="term">SQL</div>
+      <div class="desc">データベースを操作するための言語。SELECT・INSERT・UPDATE・DELETEが基本。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== サンプルテーブル + CREATE TABLE ===== -->
+<section>
+  <h2>サンプルテーブル構成</h2>
+  <p>この教材では以下の3テーブルを使って説明する。実際のテーブルの見た目はこうなっている。</p>
+
+  <h3>users テーブル（ユーザー情報）</h3>
+  <div class="sample-table-wrap">
+    <table class="sample-table">
+      <tr><th>id</th><th>name</th><th>age</th><th>department_id</th><th>created_at</th></tr>
+      <tr><td>1</td><td>山田 太郎</td><td>32</td><td>1</td><td>2024-01-10</td></tr>
+      <tr><td>2</td><td>田中 花子</td><td>28</td><td>2</td><td>2024-02-05</td></tr>
+      <tr><td>3</td><td>鈴木 一郎</td><td>45</td><td>1</td><td>2024-03-15</td></tr>
+      <tr><td>4</td><td>佐藤 美咲</td><td>23</td><td class="null-val">NULL</td><td>2024-04-20</td></tr>
+    </table>
+  </div>
+
+  <h3>departments テーブル（部署情報）</h3>
+  <div class="sample-table-wrap">
+    <table class="sample-table">
+      <tr><th>id</th><th>name</th></tr>
+      <tr><td>1</td><td>開発部</td></tr>
+      <tr><td>2</td><td>営業部</td></tr>
+      <tr><td>3</td><td>総務部</td></tr>
+    </table>
+  </div>
+
+  <h3>orders テーブル（注文情報）</h3>
+  <div class="sample-table-wrap">
+    <table class="sample-table">
+      <tr><th>id</th><th>user_id</th><th>amount</th><th>status</th><th>ordered_at</th></tr>
+      <tr><td>1</td><td>1</td><td>3000</td><td>completed</td><td>2024-05-01</td></tr>
+      <tr><td>2</td><td>1</td><td>1500</td><td>completed</td><td>2024-05-10</td></tr>
+      <tr><td>3</td><td>2</td><td>8000</td><td>pending</td><td>2024-05-12</td></tr>
+      <tr><td>4</td><td>3</td><td>500</td><td>completed</td><td>2024-05-15</td></tr>
+    </table>
+  </div>
+
+  <h3>CREATE TABLE — テーブルを作成するSQL</h3>
+  <p>実際にこのテーブルを作るSQL。本番環境では直接実行せず、マイグレーションツール経由が一般的。</p>
+  <pre><span class="cmt">-- データベースを作成して選択</span>
+<span class="kw">CREATE DATABASE</span> sample_db <span class="kw">CHARACTER SET</span> utf8mb4;
+<span class="cmt">-- ↑ CHARACTER SET utf8mb4: 日本語などを扱う場合は必須。指定がないと文字化けエラーになる</span>
+<span class="kw">USE</span> sample_db;  <span class="cmt">-- MySQL固有。PostgreSQLは \c sample_db</span>
+
+<span class="cmt">-- departments（先に作る。usersがFKで参照するため）</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">departments</span> (
+    id   <span class="kw">INT</span>          <span class="kw">PRIMARY KEY AUTO_INCREMENT</span>,  <span class="cmt">-- 主キー。自動採番</span>
+    name <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>                      <span class="cmt">-- NULL禁止</span>
+) <span class="kw">CHARACTER SET</span> utf8mb4;
+
+<span class="cmt">-- users</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">users</span> (
+    id            <span class="kw">INT</span>          <span class="kw">PRIMARY KEY AUTO_INCREMENT</span>,
+    name          <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+    age           <span class="kw">INT</span>,
+    department_id <span class="kw">INT</span>,
+    created_at    <span class="kw">DATETIME</span>     <span class="kw">DEFAULT CURRENT_TIMESTAMP</span>,
+    <span class="cmt">-- ↑ DATETIME型にはCURRENT_TIMESTAMPを使う。CURRENT_DATEはDATE型専用</span>
+    <span class="kw">FOREIGN KEY</span> (department_id) <span class="kw">REFERENCES</span> <span class="tbl">departments</span>(id)  <span class="cmt">-- 外部キー制約</span>
+) <span class="kw">CHARACTER SET</span> utf8mb4;
+
+<span class="cmt">-- orders</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">orders</span> (
+    id         <span class="kw">INT</span>           <span class="kw">PRIMARY KEY AUTO_INCREMENT</span>,
+    user_id    <span class="kw">INT</span>           <span class="kw">NOT NULL</span>,
+    amount     <span class="kw">INT</span>           <span class="kw">NOT NULL</span>,
+    status     <span class="kw">VARCHAR</span>(<span class="num">50</span>)  <span class="kw">DEFAULT</span> <span class="str">'pending'</span>,
+    ordered_at <span class="kw">DATETIME</span>      <span class="kw">DEFAULT CURRENT_TIMESTAMP</span>,
+    <span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id)
+) <span class="kw">CHARACTER SET</span> utf8mb4;</pre>
+
+  <div class="warn"><strong>⚠ エラーになりやすいポイント2つ</strong>
+  1. <strong>DATETIME型にはCURRENT_TIMESTAMPを使う</strong> — MySQLのバージョンによって <code>DATETIME DEFAULT CURRENT_DATE</code> が使えないケースがある。DATETIME型には <code>CURRENT_TIMESTAMP</code>（または <code>NOW()</code>）を使う方が安全。DATE型専用の値をDATETIMEに指定したことが原因のエラーでもある。<br>
+  2. <strong>日本語を扱う場合はCHARACTER SET utf8mb4が必要</strong> — 指定がないとデフォルトのlatin1になり、日本語INSERT時に <code>Incorrect string value</code> エラーが出る。データベース作成時かテーブル作成時に指定する。
+  </div>
+  <div class="tip">AUTO_INCREMENT はMySQL固有。PostgreSQLでは SERIAL または GENERATED ALWAYS AS IDENTITY を使う。<span class="db-note">DB固有</span></div>
+</section>
+
+<!-- ===== SELECT ===== -->
+<section>
+  <h2>SELECT — データを取得する</h2>
+  <p>最も基本の構文。どのテーブルからどのカラムを取るかを指定する。</p>
+
+  <h3>基本構文の形</h3>
+  <pre><span class="kw">SELECT</span>   カラム名
+<span class="kw">FROM</span>     テーブル名
+<span class="kw">WHERE</span>    条件
+<span class="kw">ORDER BY</span> 並び順
+<span class="kw">LIMIT</span>    件数;</pre>
+
+  <h3>全カラム / カラムを絞る</h3>
+  <pre><span class="cmt">-- * で全カラム（本番では必要なカラムだけ指定する方がパフォーマンスが良い）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- 必要なカラムだけ指定</span>
+<span class="kw">SELECT</span>
+    id,
+    name,
+    age
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>DISTINCT — 重複を除いて取得する</h3>
+  <pre><span class="cmt">-- 重複を除いてdepartment_idの一覧を取得</span>
+<span class="kw">SELECT DISTINCT</span> department_id <span class="kw">FROM</span> <span class="tbl">users</span>;
+<span class="cmt">-- usersに (1,1,2,NULL) があれば → 1, 2, NULL の3件が返る</span>
+
+<span class="cmt">-- 複数カラムの場合: 組み合わせが重複しているものを除く</span>
+<span class="kw">SELECT DISTINCT</span> department_id, age <span class="kw">FROM</span> <span class="tbl">users</span>;
+<span class="cmt">-- department_id と age の組み合わせが同じ行が除かれる</span></pre>
+  <div class="warn"><strong>⚠ DISTINCTはパフォーマンスに注意</strong>
+重複除去のために全件ソートが走る。大量データに多用すると遅くなる。「そもそもなぜ重複が発生しているか」を先に確認するのが望ましい（JOINのミスで重複が生じているケースが多い）。</div>
+
+  <h3>WHERE — 条件で絞り込む</h3>
+
+  <h3>演算子一覧</h3>
+  <table>
+    <tr><th>種類</th><th>演算子</th><th>意味</th><th>例</th></tr>
+    <tr><td rowspan="6">比較</td><td>=</td><td>等しい</td><td>age = 30</td></tr>
+    <tr><td>!= または &lt;&gt;</td><td>等しくない</td><td>age != 30</td></tr>
+    <tr><td>&gt;</td><td>より大きい</td><td>age &gt; 30</td></tr>
+    <tr><td>&gt;=</td><td>以上</td><td>age &gt;= 30</td></tr>
+    <tr><td>&lt;</td><td>より小さい</td><td>age &lt; 30</td></tr>
+    <tr><td>&lt;=</td><td>以下</td><td>age &lt;= 30</td></tr>
+    <tr><td rowspan="3">論理</td><td>AND</td><td>両方の条件を満たす</td><td>age &gt;= 30 AND department_id = 1</td></tr>
+    <tr><td>OR</td><td>どちらかの条件を満たす</td><td>age &lt; 25 OR age &gt; 40</td></tr>
+    <tr><td>NOT</td><td>条件を反転する</td><td>NOT department_id = 1</td></tr>
+    <tr><td rowspan="5">特殊</td><td>IN</td><td>リストのどれかに一致</td><td>department_id IN (1, 2, 3)</td></tr>
+    <tr><td>NOT IN</td><td>リストのどれにも一致しない</td><td>department_id NOT IN (1, 2)</td></tr>
+    <tr><td>BETWEEN A AND B</td><td>AからBの範囲内（両端含む）</td><td>age BETWEEN 20 AND 30</td></tr>
+    <tr><td>IS NULL / IS NOT NULL</td><td>NULLかどうか</td><td>department_id IS NULL</td></tr>
+    <tr><td>EXISTS / NOT EXISTS</td><td>サブクエリの結果が存在するか</td><td>WHERE EXISTS (SELECT 1 FROM orders WHERE ...)</td></tr>
+    <tr><td rowspan="4">文字列</td><td>LIKE '山%'</td><td>「山」で始まる（% = 任意の文字列）</td><td>name LIKE '山%'</td></tr>
+    <tr><td>LIKE '%山%'</td><td>「山」を含む</td><td>name LIKE '%山%'</td></tr>
+    <tr><td>LIKE '山_'</td><td>「山」+1文字（_ = 任意の1文字）</td><td>name LIKE '山_'</td></tr>
+    <tr><td>REGEXP / RLIKE</td><td>正規表現に一致する<span class="db-note" style="font-size:10px;margin-left:4px">MySQL固有</span></td><td>name REGEXP '^[ぁ-ん]+'</td></tr>
+    <tr><td rowspan="4">算術</td><td>+</td><td>加算</td><td>amount + 100</td></tr>
+    <tr><td>-</td><td>減算</td><td>amount - discount</td></tr>
+    <tr><td>*</td><td>乗算</td><td>price * quantity</td></tr>
+    <tr><td>/</td><td>除算</td><td>amount / 1.1</td></tr>
+    <tr><td rowspan="2">ビット</td><td>| &amp; ^</td><td>OR・AND・XOR（ビット演算）</td><td>flags &amp; 1</td></tr>
+    <tr><td>&lt;&lt; &gt;&gt;</td><td>左/右シフト</td><td>1 &lt;&lt; 3（= 8）</td></tr>
+  </table>
+  <div class="tip">算術演算子はSELECT句・WHERE句・ORDER BY句のどこでも使える。例：<code>SELECT amount * 1.1 AS amount_with_tax FROM orders</code></div>
+
+  <div class="warn"><strong>⚠ REGEXP — パフォーマンスと方言に注意</strong>
+  正規表現はインデックスが効かず全行スキャンになる。大量データのWHEREには使わない。管理画面での確認やデータクレンジック時の絞り込みなど、件数が少ない用途に限定する。<br>
+  また構文がDBによって異なる。MySQLは <code>REGEXP</code>（または <code>RLIKE</code>）、PostgreSQLは <code>~</code>（一致）・<code>!~</code>（不一致）・<code>~*</code>（大文字小文字無視）を使う。<span class="db-note">DB固有</span>
+  </div>
+
+  <div class="warn"><strong>⚠ NOT IN — サブクエリにNULLが含まれると全件0件になる</strong>
+  <code>NOT IN (サブクエリ)</code> のサブクエリがNULLを1件でも返すと、結果が全件0件になる。これはNULLとの比較が常に「不明」になるSQL仕様による。<br>
+  サブクエリを使う場合は <code>NOT EXISTS</code> の方が安全で、インデックスも使われやすい。<br>
+  値を直接列挙する場合（<code>NOT IN (1, 2, 3)</code>）はNULLが混入しないので問題ない。
+  </div>
+
+  <div class="warn"><strong>⚠ LIKE — 前方一致以外はインデックスが効かない</strong>
+  <code>LIKE '山%'</code>（前方一致）はインデックスが使われる。<code>LIKE '%山%'</code>（中間一致）や <code>LIKE '%山'</code>（後方一致）はフルスキャンになる。<br>
+  大量データの中間一致検索が必要な場合は全文検索（FULLTEXT INDEX）の導入を検討する。<span class="db-note">MySQL固有</span>
+  </div>
+
+  <div class="warn"><strong>⚠ BETWEEN — 文字列型に使うと意図しない結果になることがある</strong>
+  数値・日付型には問題なく使えるが、文字列型に <code>BETWEEN</code> を使うと辞書順での比較になる。<code>BETWEEN '2024-01-01' AND '2024-12-31'</code> は文字列の辞書順一致になるため、DATE型・DATETIME型のカラムに使う方が安全。
+  </div>
+
+  <div class="warn"><strong>⚠ 算術演算 — ゼロ除算はエラーになる</strong>
+  <code>amount / 0</code> はMySQLではNULLを返す（エラーにはならない）が、PostgreSQLはエラーになる。除数が0になる可能性がある場合は <code>NULLIF(divisor, 0)</code> で0をNULLに変換してから割り算する。<br>
+  例: <code>amount / NULLIF(quantity, 0)</code>
+  </div>
+
+  <pre><span class="cmt">-- 単一条件</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> age >= <span class="num">30</span>;
+
+<span class="cmt">-- AND: 両方の条件を満たす</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span>  age >= <span class="num">30</span>
+<span class="kw">  AND</span>  department_id = <span class="num">2</span>;
+
+<span class="cmt">-- OR: どちらかの条件を満たす</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> age < <span class="num">25</span>
+<span class="kw">   OR</span> age > <span class="num">40</span>;
+
+<span class="cmt">-- IN: 複数の値のどれかに一致</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> department_id <span class="kw">IN</span> (<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>);
+
+<span class="cmt">-- BETWEEN: 範囲指定（20以上30以下、両端含む）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> age <span class="kw">BETWEEN</span> <span class="num">20</span> <span class="kw">AND</span> <span class="num">30</span>;
+
+<span class="cmt">-- LIKE: 部分一致</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'山%'</span>;   <span class="cmt">-- 「山」で始まる名前</span>
+
+<span class="cmt">-- NULL チェック</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> department_id <span class="kw">IS NULL</span>;
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> department_id <span class="kw">IS NOT NULL</span>;</pre>
+
+  <div class="warn"><strong>⚠ NULL の比較は IS NULL / IS NOT NULL を使う</strong>
+WHERE department_id = NULL  ← NG: 常に偽になる（何もヒットしない）<br>
+WHERE department_id IS NULL ← OK</div>
+
+  <h3>NULLの演算と COALESCE</h3>
+  <p>NULLは「値がない」という特殊な状態。<strong>NULLを含む計算は結果もNULLになる</strong>。これを知らないと集計や計算結果がおかしくなる。</p>
+  <pre><span class="cmt">-- NULLを含む演算はすべてNULLになる</span>
+<span class="cmt">-- NULL + 1    → NULL</span>
+<span class="cmt">-- NULL * 100  → NULL</span>
+<span class="cmt">-- NULL || 'さん' → NULL（文字列結合も）</span>
+
+<span class="cmt">-- COALESCE: NULLだったら代替値を返す</span>
+<span class="kw">SELECT</span>
+    name,
+    <span class="kw">COALESCE</span>(department_id, <span class="num">0</span>) <span class="kw">AS</span> dept_id,  <span class="cmt">-- NULLなら0</span>
+    <span class="kw">COALESCE</span>(age, <span class="num">0</span>) * <span class="num">2</span>         <span class="kw">AS</span> doubled   <span class="cmt">-- NULLなら0にしてから計算</span>
+<span class="kw">FROM</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- 集計関数はNULLを無視する（COUNT(*)だけは例外）</span>
+<span class="kw">SELECT</span>
+    <span class="kw">COUNT</span>(*)             <span class="kw">AS</span> total_rows,    <span class="cmt">-- 全行数（NULLも含む）</span>
+    <span class="kw">COUNT</span>(department_id) <span class="kw">AS</span> has_dept,      <span class="cmt">-- NULLを除いた件数</span>
+    <span class="kw">AVG</span>(age)             <span class="kw">AS</span> avg_age        <span class="cmt">-- NULLを除いた平均（NULLは分母に含まない）</span>
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>LIKE のエスケープ</h3>
+  <p>LIKE で使う <code>%</code> や <code>_</code> 自体を文字として検索したいときはエスケープが必要。</p>
+  <pre><span class="cmt">-- 「10%」という文字列を含む行を検索したい場合</span>
+<span class="cmt">-- そのまま書くと % がワイルドカードとして解釈される</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">items</span>
+<span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'%10\%%'</span> <span class="kw">ESCAPE</span> <span class="str">''</span>;  <span class="cmt">-- \ でエスケープ</span>
+
+<span class="cmt">-- _ のエスケープ（任意の1文字ではなく _ そのものを検索）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">items</span>
+<span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'user\_name'</span> <span class="kw">ESCAPE</span> <span class="str">''</span>;</pre>
+  <div class="tip">ESCAPEで使う文字は <code>\</code> 以外でも指定できる。<code>ESCAPE '!'</code> とすれば <code>!</code> をエスケープ文字にできる。DBによってデフォルトのエスケープ文字が違うので、明示的にESCAPE句を書く方が安全。</div>
+
+  <h3>括弧で優先順位を変える</h3>
+  <p>AND は OR より優先順位が高い。意図した通りに動かすには括弧で明示的にグループ化する。</p>
+  <pre><span class="cmt">-- 括弧なし: AND が先に評価される</span>
+<span class="cmt">-- 実際の解釈: (age >= 30 AND department_id = 1) OR name LIKE '鈴木%'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> age >= <span class="num">30</span> <span class="kw">AND</span> department_id = <span class="num">1</span> <span class="kw">OR</span> name <span class="kw">LIKE</span> <span class="str">'鈴木%'</span>;
+
+<span class="cmt">-- 括弧あり: 意図を明示する</span>
+<span class="cmt">-- 「30歳以上 かつ（開発部 または 鈴木さん）」</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span>  age >= <span class="num">30</span>
+  <span class="kw">AND</span> (department_id = <span class="num">1</span> <span class="kw">OR</span> name <span class="kw">LIKE</span> <span class="str">'鈴木%'</span>);</pre>
+
+  <div class="tip">AND と OR を混在させるときは常に括弧をつける習慣をつけると意図しない動作を防げる。</div>
+
+  <h3>ORDER BY — 並び替え</h3>
+  <table>
+    <tr><th>キーワード</th><th>意味</th><th>例（age）</th></tr>
+    <tr><td>ASC</td><td>昇順（小さい順・古い順）。省略するとデフォルトでASC</td><td>23, 28, 32, 45</td></tr>
+    <tr><td>DESC</td><td>降順（大きい順・新しい順）</td><td>45, 32, 28, 23</td></tr>
+  </table>
+  <pre><span class="cmt">-- 年齢の降順（大きい順）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span> age <span class="kw">DESC</span>;
+
+<span class="cmt">-- 複数カラムで並び替え</span>
+<span class="cmt">-- department_idで昇順に並べて、同じ部署内ではageを降順</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span> department_id <span class="kw">ASC</span>, age <span class="kw">DESC</span>;</pre>
+
+  <h3>NULLを後ろに持ってくる</h3>
+  <p>MySQLではNULLはASC（昇順）のとき先頭に来る。NULLを最後に回したいときは2通りの書き方がある。</p>
+  <pre><span class="cmt">-- 方法1: 式（計算結果）で並び替え</span>
+<span class="cmt">-- IS NULL は NULL のとき1、値があるとき0 を返す</span>
+<span class="cmt">-- まず「NULLかどうか（0か1か）」で並べてからdepartment_idで並べる</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span> department_id <span class="kw">IS NULL</span> <span class="kw">ASC</span>,  <span class="cmt">-- NULL=1が後ろ（非NULLの0が先）</span>
+         department_id <span class="kw">ASC</span>,
+         age <span class="kw">DESC</span>;
+<span class="cmt">-- ↑ 同じカラムを2回書いてもOK。役割が違う（1回目は「NULLか否か」の判定、2回目は値の順序）</span>
+
+<span class="cmt">-- 方法2: CASE式で明示的に書く（意図が読みやすい）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span>
+    <span class="kw">CASE WHEN</span> department_id <span class="kw">IS NULL THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span> <span class="kw">ASC</span>,  <span class="cmt">-- NULLは1（後回し）</span>
+    department_id <span class="kw">ASC</span>,
+    age <span class="kw">DESC</span>;</pre>
+
+  <div class="tip">ORDER BY句には式・関数・CASE式の結果を書ける。「計算した値で並び替える」という発想が持てると複雑な並び順も書けるようになる。両方とも結果は同じで、方法1は短く書けるが、方法2のCASE式版の方が何をしているか一目でわかる。チームで書く場合はCASE式推奨。</div>
+
+  <h3>LIMIT — 件数を絞る</h3>
+  <pre><span class="cmt">-- 先頭10件だけ取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- OFFSET: 何件目から取るか（ページング処理に使う）</span>
+<span class="cmt">-- 11件目から10件取得（2ページ目）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">LIMIT</span> <span class="num">10</span> <span class="kw">OFFSET</span> <span class="num">10</span>;</pre>
+</section>
+
+<!-- ===== CRUD ===== -->
+<section>
+  <h2 class="red">INSERT / UPDATE / DELETE — データを操作する（CRUD）</h2>
+  <p>CRUD とは Create（作成）・Read（読取）・Update（更新）・Delete（削除）の頭文字。SELECT が Read にあたる。</p>
+
+  <h3>ロールバックとトランザクション</h3>
+  <p>UPDATE・DELETE などの変更操作は、やり直しがきかない場合がある。トランザクションで囲むと、問題があったときに変更をなかったことにできる（ロールバック）。</p>
+  <pre><span class="kw">BEGIN</span>;  <span class="cmt">-- トランザクション開始（START TRANSACTIONとも書く）</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span>   age = <span class="num">33</span>
+<span class="kw">WHERE</span> id  = <span class="num">1</span>;
+
+<span class="cmt">-- ここで SELECT して確認</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+<span class="kw">COMMIT</span>;    <span class="cmt">-- 問題なければ確定（これで初めてDBに反映される）</span>
+<span class="cmt">-- ROLLBACK; -- 問題があればなかったことにする</span></pre>
+  <div class="tip">TRUNCATEはトランザクションが効かないDBが多い。重要データには使わないこと。<span class="db-note">DB固有</span></div>
+
+  <h3>論理削除 — データを残したまま「削除済み」にする</h3>
+  <p>実務では DELETE でデータを物理的に消す代わりに、<code>is_deleted</code> のようなフラグカラムを使って「削除済み」とマークする設計が多い。これを<strong>論理削除</strong>という。</p>
+
+  <pre><span class="cmt">-- 物理削除（データが消える・取り消し不可）</span>
+<span class="kw">DELETE FROM</span> <span class="tbl">employees</span> <span class="kw">WHERE</span> id = <span class="num">5</span>;
+
+<span class="cmt">-- 論理削除（データは残る・フラグだけ変える）</span>
+<span class="kw">UPDATE</span> <span class="tbl">employees</span>
+<span class="kw">SET</span>   is_deleted = <span class="num">1</span>
+<span class="kw">WHERE</span> id = <span class="num">5</span>;
+
+<span class="cmt">-- 有効なレコードだけ取得するときは常に is_deleted = 0 を条件に加える</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">employees</span> <span class="kw">WHERE</span> is_deleted = <span class="num">0</span>;</pre>
+
+  <h3>フラグカラムの読み方</h3>
+  <p>プログラミングでは <strong>true（真）= 1、false（偽）= 0</strong> という対応が基本。DBのフラグカラムもこれに基づいていて、TINYINT(1)型の 0/1 がそのまま false/true に対応している。</p>
+  <table>
+    <tr><th>DB格納値</th><th>プログラムでの意味</th><th>状態のイメージ</th></tr>
+    <tr><td>0</td><td>false（偽）</td><td>フラグが立っていない・条件を満たしていない</td></tr>
+    <tr><td>1</td><td>true（真）</td><td>フラグが立っている・条件を満たしている</td></tr>
+  </table>
+  <p>これを踏まえると <code>is_deleted = 0</code> は「削除フラグが false」＝「削除されていない」、<code>is_deleted = 1</code> は「削除フラグが true」＝「削除済み」と読める。</p>
+  <p>MySQLでは TINYINT(1) が事実上の BOOLEAN 型として使われている。PostgreSQL は BOOLEAN 型が独立して存在し、<code>TRUE</code>/<code>FALSE</code> または <code>1</code>/<code>0</code> どちらでも書ける。<span class="db-note">DB固有</span></p>
+  <pre><span class="cmt">-- MySQL: TINYINT(1)で0/1を使う</span>
+<span class="kw">WHERE</span> is_deleted = <span class="num">0</span>   <span class="cmt">-- false = 削除されていない</span>
+<span class="kw">WHERE</span> is_deleted = <span class="num">1</span>   <span class="cmt">-- true  = 削除済み</span>
+
+<span class="cmt">-- PostgreSQL: BOOLEAN型ならTRUE/FALSEも使える</span>
+<span class="kw">WHERE</span> is_deleted = <span class="kw">FALSE</span>
+<span class="kw">WHERE</span> is_deleted = <span class="kw">TRUE</span></pre>
+  <p>カラム名によって「0が何を表すか」が変わるので、名前をよく確認する習慣をつける。</p>
+
+  <table>
+    <tr><th>よく見るカラム名</th><th>0の意味</th><th>1の意味</th><th>備考</th></tr>
+    <tr><td><code>is_deleted</code></td><td>有効（削除されていない）</td><td>削除済み</td><td>論理削除の定番。最もよく見る</td></tr>
+    <tr><td><code>is_active</code></td><td>無効（アクティブでない）</td><td>有効・アクティブ</td><td>is_deletedと向きが逆になるので注意</td></tr>
+    <tr><td><code>is_published</code></td><td>非公開</td><td>公開済み</td><td>記事・商品の公開フラグ</td></tr>
+    <tr><td><code>is_read</code></td><td>未読</td><td>既読</td><td>通知・メッセージの既読フラグ</td></tr>
+    <tr><td><code>is_locked</code></td><td>未ロック（通常状態）</td><td>ロック中</td><td>アカウントロック等</td></tr>
+    <tr><td><code>is_admin</code></td><td>一般ユーザー</td><td>管理者</td><td>権限フラグ</td></tr>
+    <tr><td><code>is_abnormal</code></td><td>正常値</td><td>異常値</td><td>検査結果等</td></tr>
+  </table>
+
+  <div class="warn"><strong>⚠ is_active は is_deleted と向きが逆</strong>
+<code>is_deleted = 0</code> が有効なのに対し、<code>is_active = 1</code> が有効。混在しているシステムでは条件を逆に書くミスが起きやすい。カラム名を毎回確認する。</div>
+
+  <div class="tip">論理削除を使う理由：外部キーで参照されているデータを物理削除するとFK制約エラーになる。また、削除後も履歴として残す必要がある場合（注文履歴・退職者の情報等）に論理削除が有効。</div>
+
+  <h3>DROP TABLE — テーブルごと削除する</h3>
+  <pre><span class="cmt">-- テーブルを削除する（データも定義も全て消える・取り消し不可）</span>
+<span class="kw">DROP TABLE</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- テーブルが存在する場合のみ削除（存在しないとエラーになるのを防ぐ）</span>
+<span class="kw">DROP TABLE IF EXISTS</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- 複数テーブルを一度に削除</span>
+<span class="kw">DROP TABLE IF EXISTS</span> <span class="tbl">orders</span>, <span class="tbl">users</span>, <span class="tbl">departments</span>;
+<span class="cmt">-- ↑ FK制約がある場合は参照している側（子）から先に削除する</span></pre>
+  <div class="warn"><strong>⚠ DROP TABLEはテーブルの定義ごと消える</strong>
+  DELETEやTRUNCATEはデータだけ消すがテーブルの器は残る。DROP TABLEはテーブル自体が消えて取り消せない。必ずバックアップを確認してから実行する。</div>
+
+  <h3>DB・テーブルの確認コマンド（メタコマンド）</h3>
+  <p>現在のDB状態を確認するコマンド。DBによって大きく書き方が変わる。</p>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>DB一覧</td><td><code>SHOW DATABASES;</code></td><td><code>\l</code> または <code>SELECT datname FROM pg_database;</code></td><td>該当なし（ファイルが1DB）</td></tr>
+    <tr><td>使用するDBを切り替え</td><td><code>USE sample_db;</code></td><td><code>\c sample_db</code></td><td>別ファイルを開く</td></tr>
+    <tr><td>現在のDB確認</td><td><code>SELECT DATABASE();</code></td><td><code>SELECT current_database();</code></td><td>該当なし</td></tr>
+    <tr><td>テーブル一覧</td><td><code>SHOW TABLES;</code></td><td><code>\dt</code> または <code>SELECT tablename FROM pg_tables WHERE schemaname='public';</code></td><td><code>.tables</code></td></tr>
+    <tr><td>テーブル定義確認</td><td><code>DESCRIBE users;</code> または <code>DESC users;</code></td><td><code>\d users</code></td><td><code>.schema users</code></td></tr>
+    <tr><td>CREATE TABLE文を確認</td><td><code>SHOW CREATE TABLE users;</code></td><td><code>\d+ users</code></td><td><code>.schema users</code></td></tr>
+    <tr><td>インデックス一覧</td><td><code>SHOW INDEX FROM users;</code></td><td><code>\di</code> または <code>SELECT * FROM pg_indexes WHERE tablename='users';</code></td><td><code>.indexes</code></td></tr>
+    <tr><td>実行中のプロセス確認</td><td><code>SHOW PROCESSLIST;</code></td><td><code>SELECT * FROM pg_stat_activity;</code></td><td>該当なし</td></tr>
+    <tr><td>システム変数確認</td><td><code>SHOW VARIABLES LIKE '%文字列%';</code></td><td><code>SHOW server_version;</code></td><td>該当なし</td></tr>
+  </table>
+
+  <h3>INSERT — データを追加する</h3>
+  <pre><span class="cmt">-- 1件追加</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">users</span> (name, age, department_id)
+<span class="kw">VALUES</span> (<span class="str">'山田'</span>, <span class="num">32</span>, <span class="num">1</span>);
+
+<span class="cmt">-- 複数件まとめて追加（1件ずつより高速）</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">users</span> (name, age, department_id)
+<span class="kw">VALUES</span>
+    (<span class="str">'田中'</span>, <span class="num">28</span>, <span class="num">2</span>),
+    (<span class="str">'鈴木'</span>, <span class="num">35</span>, <span class="num">1</span>);</pre>
+
+  <h3>INSERT INTO ... SELECT — 別テーブルのデータをそのままコピー</h3>
+  <p>SELECT の結果をそのまま INSERT できる。テーブルのコピーや集計結果の保存に使う。</p>
+  <pre><span class="cmt">-- ordersの完了済み注文をorders_archiveテーブルにコピー</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">orders_archive</span> (id, user_id, amount, status, ordered_at)
+<span class="kw">SELECT</span>                        id, user_id, amount, status, ordered_at
+<span class="kw">FROM</span>  <span class="tbl">orders</span>
+<span class="kw">WHERE</span> status = <span class="str">'completed'</span>;
+
+<span class="cmt">-- テーブル全体を丸ごとコピーする場合</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">users_backup</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>UPDATE — データを更新する</h3>
+  <pre><span class="cmt">-- 必ずSELECTで対象を確認してからUPDATEする</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span>
+    name = <span class="str">'山田 太郎'</span>,
+    age  = <span class="num">33</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;</pre>
+
+  <div class="warn"><strong>⚠ WHERE を忘れると全行が更新される</strong>
+UPDATE users SET age = 99;  ← WHERE なし = 全ユーザーのageが99になる<br>
+必ず事前に SELECT で対象を確認してから UPDATE する。</div>
+
+  <h3>DELETE — データを削除する</h3>
+  <pre><span class="cmt">-- 削除前に必ずSELECTで対象を確認する</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+<span class="cmt">-- 問題なければ削除</span>
+<span class="kw">DELETE FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;</pre>
+
+  <div class="warn"><strong>⚠ DELETE も WHERE なしで全行削除になる</strong>
+DELETE FROM users;  ← WHERE なし = 全レコード削除<br>
+必ずWHEREをつけること。</div>
+
+  <h3>外部キー制約がある場合の削除順序</h3>
+  <p>orders の user_id は users の id を参照している（外部キー）。親（users）を先に消そうとするとエラーになる。</p>
+  <pre><span class="cmt">-- NG: 先に親を消そうとするとエラー</span>
+<span class="cmt">-- DELETE FROM users WHERE id = 1;  ← ordersが参照しているのでエラー</span>
+
+<span class="cmt">-- OK: 子テーブル（orders）→ 親テーブル（users）の順で削除</span>
+<span class="kw">DELETE FROM</span> <span class="tbl">orders</span>  <span class="cmt">-- 1. 子を先に削除</span>
+<span class="kw">WHERE</span> user_id = <span class="num">1</span>;
+
+<span class="kw">DELETE FROM</span> <span class="tbl">users</span>   <span class="cmt">-- 2. その後に親を削除</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;</pre>
+
+  <h3>TRUNCATE — テーブルの全データを削除する</h3>
+  <pre><span class="cmt">-- DELETE より高速。ただしWHEREが使えない = 全件削除専用</span>
+<span class="kw">TRUNCATE TABLE</span> <span class="tbl">users</span>;</pre>
+
+  <table>
+    <tr><th>操作</th><th>WHERE</th><th>速度</th><th>ロールバック</th><th>AUTO_INCREMENT</th></tr>
+    <tr><td>DELETE</td><td>使える</td><td>遅い</td><td>可能</td><td>リセットされない</td></tr>
+    <tr><td>TRUNCATE</td><td>使えない</td><td>速い</td><td>不可（DB依存）</td><td>リセットされる</td></tr>
+  </table>
+
+  <h3>ALTER TABLE — テーブルの構造を変更する</h3>
+  <p>テーブルを作成した後でカラムの追加・変更・削除やインデックスの追加を行う。本番環境では影響範囲を確認してから実行する。</p>
+  <pre><span class="cmt">-- カラムを追加する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD COLUMN</span> email <span class="kw">VARCHAR</span>(<span class="num">255</span>);
+
+<span class="cmt">-- カラムを追加する（位置を指定）</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD COLUMN</span> email <span class="kw">VARCHAR</span>(<span class="num">255</span>) <span class="kw">AFTER</span> name;  <span class="cmt">-- nameの直後に追加</span>
+
+<span class="cmt">-- カラムの型・制約を変更する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">MODIFY COLUMN</span> email <span class="kw">VARCHAR</span>(<span class="num">512</span>) <span class="kw">NOT NULL</span>;  <span class="cmt">-- 型変更＋NOT NULL追加</span>
+
+<span class="cmt">-- カラム名と型を同時に変更する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">CHANGE COLUMN</span> email mail_address <span class="kw">VARCHAR</span>(<span class="num">255</span>);  <span class="cmt">-- email → mail_address</span>
+
+<span class="cmt">-- カラムを削除する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">DROP COLUMN</span> email;
+
+<span class="cmt">-- インデックスを追加する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD INDEX</span> idx_email (email);
+
+<span class="cmt">-- 外部キー制約を追加する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD FOREIGN KEY</span> (department_id) <span class="kw">REFERENCES</span> <span class="tbl">departments</span>(id);
+
+<span class="cmt">-- テーブル名を変更する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">RENAME TO</span> app_users;</pre>
+
+  <div class="warn"><strong>⚠ 本番環境のALTER TABLEは慎重に</strong>
+大きいテーブルへのALTER TABLEはテーブルロックが発生して他のクエリが止まる場合がある（MySQLバージョン・操作内容による）。本番実行前に必ずバックアップを取り、影響範囲・実行時間を確認する。カラム削除は取り消せないので特に注意。</div>
+
+  <h3>バックアップの取り方（MySQL）</h3>
+  <p>ALTER TABLE実行前にテーブルの構造とデータを退避する。</p>
+  <pre><span class="cmt">-- 方法1: テーブルごとコピー（最も手軽）</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">users_backup</span> <span class="kw">AS</span> <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>;
+<span class="cmt">-- ↑ データはコピーされるが、INDEX・FK制約はコピーされない点に注意</span>
+
+<span class="cmt">-- 方法2: mysqldump でエクスポート（コマンドライン）</span>
+<span class="cmt">-- テーブル単体をバックアップ</span>
+mysqldump -u root -p sample_db users > users_backup.sql
+
+<span class="cmt">-- DB全体をバックアップ</span>
+mysqldump -u root -p sample_db > sample_db_backup.sql
+
+<span class="cmt">-- リストア（復元）</span>
+mysql -u root -p sample_db < users_backup.sql</pre>
+
+  <h3>ALTER TABLE でエラーになるパターン</h3>
+
+  <pre><span class="cmt">-- ❶ 外部キーが設定されているカラムを削除しようとした場合</span>
+<span class="cmt">-- NG: ordersのuser_idがusers.idを参照しているため削除できない</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">DROP COLUMN</span> id;
+<span class="cmt">-- エラー: Cannot drop column 'id': needed in a foreign key constraint</span>
+
+<span class="cmt">-- 対処: 先に子テーブルのFK制約を削除してから削除する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">DROP FOREIGN KEY</span> fk_orders_user;  <span class="cmt">-- FK制約名を指定</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>  <span class="kw">DROP COLUMN</span> id;</pre>
+
+  <pre><span class="cmt">-- ❷ NOT NULL制約を追加しようとしたが列内にNULLが存在する場合</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">MODIFY COLUMN</span> age <span class="kw">INT NOT NULL</span>;
+<span class="cmt">-- エラー: Column 'age' cannot be null（ageにNULLの行が1件でもあると失敗）</span>
+
+<span class="cmt">-- 対処: 先にNULLを埋めてからNOT NULL制約を追加する</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span> <span class="kw">SET</span> age = <span class="num">0</span> <span class="kw">WHERE</span> age <span class="kw">IS NULL</span>;
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">MODIFY COLUMN</span> age <span class="kw">INT NOT NULL</span>;</pre>
+
+  <pre><span class="cmt">-- ❸ カラムを追加するとき既存行の初期値</span>
+<span class="cmt">-- DEFAULT を指定しないと既存行はNULLになる</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD COLUMN</span> score <span class="kw">INT</span>;                         <span class="cmt">-- 既存行はNULL</span>
+
+<span class="cmt">-- DEFAULT を指定すると既存行にも適用される</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD COLUMN</span> score <span class="kw">INT NOT NULL DEFAULT</span> <span class="num">0</span>;     <span class="cmt">-- 既存行は0になる</span></pre>
+
+  <pre><span class="cmt">-- ❹ 型変換できない値が存在する場合</span>
+<span class="cmt">-- VARCHARに「山田」など文字列が入っているのにINTに変更しようとした場合</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">MODIFY COLUMN</span> name <span class="kw">INT</span>;
+<span class="cmt">-- エラー: Incorrect integer value: '山田' for column 'name'</span>
+
+<span class="cmt">-- 対処: 先にデータを確認・クレンジングしてから型変更する</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> name <span class="kw">NOT REGEXP</span> <span class="str">'^[0-9]+$'</span>;  <span class="cmt">-- 数値でない行を確認</span></pre>
+
+  <h3>インデックスの削除・ユニーク制約</h3>
+  <pre><span class="cmt">-- まずインデックス一覧を確認する（Key_nameがインデックス名）</span>
+<span class="kw">SHOW INDEX FROM</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- インデックスを削除する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">DROP INDEX</span> idx_email;
+
+<span class="cmt">-- ユニーク制約を追加する（値の重複を禁止する）</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">ADD CONSTRAINT</span> uq_email <span class="kw">UNIQUE</span> (email);
+
+<span class="cmt">-- ユニーク制約を削除する（実体はインデックスなのでDROP INDEXで削除）</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span> <span class="kw">DROP INDEX</span> uq_email;</pre>
+
+  <h3>デフォルト値の変更・削除</h3>
+  <pre><span class="cmt">-- デフォルト値を変更する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span>
+<span class="kw">ALTER COLUMN</span> status <span class="kw">SET DEFAULT</span> <span class="str">'processing'</span>;
+
+<span class="cmt">-- デフォルト値を削除する（DEFAULT NULLと同じ効果）</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span>
+<span class="kw">ALTER COLUMN</span> status <span class="kw">DROP DEFAULT</span>;</pre>
+
+  <h3>カラムの順序変更</h3>
+  <pre><span class="cmt">-- カラムを先頭に移動する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">MODIFY COLUMN</span> name <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL FIRST</span>;
+
+<span class="cmt">-- 特定カラムの直後に移動する</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">users</span>
+<span class="kw">MODIFY COLUMN</span> age <span class="kw">INT AFTER</span> name;
+<span class="cmt">-- ↑ 型の再指定が必要。省略するとデフォルト型になりデータが壊れる可能性がある</span></pre>
+  <div class="tip">カラムの順序変更はMODIFY COLUMNに型情報を必ず書く。型を省略するとMySQLがデフォルト型で上書きするため既存データが壊れる場合がある。</div>
+
+  <h3>やってはいけないパターン</h3>
+  <table>
+    <tr><th>操作</th><th>何が起きるか</th><th>対処</th></tr>
+    <tr><td>本番の大テーブルをWHEREなしでUPDATE後にALTER TABLE</td><td>テーブルロック中に他のクエリが詰まってサービス停止</td><td>メンテナンス時間帯に実行・pt-online-schema-changeなどツールを使う</td></tr>
+    <tr><td>FK制約のある親テーブルのidカラムを型変更（INT→BIGINT）</td><td>子テーブルのFK列との型不一致でエラー</td><td>子テーブルのFK列も同時に変更する</td></tr>
+    <tr><td>NOT NULL列にDEFAULTなしでカラム追加（大量データあり）</td><td>全行にNULLが入った状態でNOT NULL制約が通らずエラー</td><td>まずNULL許容で追加→UPDATE→NOT NULL追加の3ステップで実施</td></tr>
+    <tr><td>ENUMの既存値を削除する型変更</td><td>削除した値を持つ行が全てエラーになる</td><td>先に対象行のデータを更新してから型変更</td></tr>
+    <tr><td>本番でDROP COLUMNを直接実行</td><td>データが即時消えて取り消せない</td><td>バックアップ確認→ステージング確認→本番実行の順を守る</td></tr>
+  </table>
+
+  <h3>ALTER TABLEでできること 全一覧（MySQL）</h3>
+  <table>
+    <tr><th>操作</th><th>構文</th><th>補足</th></tr>
+    <tr><td>カラム追加</td><td><code>ADD COLUMN col type</code></td><td>末尾に追加。FIRSTで先頭、AFTER colで指定位置</td></tr>
+    <tr><td>カラム追加（先頭）</td><td><code>ADD COLUMN col type FIRST</code></td><td></td></tr>
+    <tr><td>カラム追加（指定位置）</td><td><code>ADD COLUMN col type AFTER other_col</code></td><td></td></tr>
+    <tr><td>カラムの型・制約変更</td><td><code>MODIFY COLUMN col newtype</code></td><td>型の再指定が必須。省略するとデフォルト型になる</td></tr>
+    <tr><td>カラム名と型を同時変更</td><td><code>CHANGE COLUMN old_col new_col type</code></td><td>型も必ず指定する</td></tr>
+    <tr><td>カラム削除</td><td><code>DROP COLUMN col</code></td><td>取り消し不可。FK参照があるとエラー</td></tr>
+    <tr><td>カラムの順序変更（先頭）</td><td><code>MODIFY COLUMN col type FIRST</code></td><td>型の再指定必須</td></tr>
+    <tr><td>カラムの順序変更（指定位置）</td><td><code>MODIFY COLUMN col type AFTER other_col</code></td><td>型の再指定必須</td></tr>
+    <tr><td>デフォルト値を設定</td><td><code>ALTER COLUMN col SET DEFAULT val</code></td><td></td></tr>
+    <tr><td>デフォルト値を削除</td><td><code>ALTER COLUMN col DROP DEFAULT</code></td><td></td></tr>
+    <tr><td>インデックス追加</td><td><code>ADD INDEX idx_name (col)</code></td><td>複合インデックスは <code>(col1, col2)</code></td></tr>
+    <tr><td>インデックス削除</td><td><code>DROP INDEX idx_name</code></td><td>事前に <code>SHOW INDEX FROM tbl</code> で名前確認</td></tr>
+    <tr><td>主キー追加</td><td><code>ADD PRIMARY KEY (col)</code></td><td></td></tr>
+    <tr><td>主キー削除</td><td><code>DROP PRIMARY KEY</code></td><td>AUTO_INCREMENTがある場合は先にMODIFYで外す</td></tr>
+    <tr><td>ユニーク制約追加</td><td><code>ADD CONSTRAINT name UNIQUE (col)</code></td><td></td></tr>
+    <tr><td>ユニーク制約削除</td><td><code>DROP INDEX name</code></td><td>実体はインデックスなのでDROP INDEXで削除</td></tr>
+    <tr><td>外部キー制約追加</td><td><code>ADD FOREIGN KEY (col) REFERENCES tbl(col)</code></td><td></td></tr>
+    <tr><td>外部キー制約削除</td><td><code>DROP FOREIGN KEY fk_name</code></td><td>事前に <code>SHOW CREATE TABLE tbl</code> で制約名確認</td></tr>
+    <tr><td>テーブル名変更</td><td><code>RENAME TO new_name</code></td><td></td></tr>
+    <tr><td>文字コード変更</td><td><code>CONVERT TO CHARACTER SET utf8mb4</code></td><td>既存データも変換される</td></tr>
+    <tr><td>コメント変更</td><td><code>COMMENT = 'テーブルの説明'</code></td><td></td></tr>
+    <tr><td>AUTO_INCREMENTの値変更</td><td><code>AUTO_INCREMENT = n</code></td><td>現在値より小さい値には変更できない</td></tr>
+  </table>
+</section>
+
+<!-- ===== CASE式 ===== -->
+<section>
+  <h2>CASE式 — SQLの条件分岐</h2>
+  <p>CASE式はSQLの中で条件分岐を書く構文。SELECT・WHERE・ORDER BY・GROUP BYのどこでも使える。</p>
+
+  <h3>基本の書き方（検索CASE式）</h3>
+  <pre><span class="cmt">-- CASE WHEN 条件 THEN 結果 ... ELSE デフォルト END</span>
+<span class="kw">SELECT</span>
+    name,
+    age,
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> age < <span class="num">20</span> <span class="kw">THEN</span> <span class="str">'未成年'</span>
+        <span class="kw">WHEN</span> age < <span class="num">65</span> <span class="kw">THEN</span> <span class="str">'成人'</span>
+        <span class="kw">ELSE</span>               <span class="str">'シニア'</span>   <span class="cmt">-- どの条件にも合わない場合</span>
+    <span class="kw">END</span> <span class="kw">AS</span> age_group
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>単純CASE式 — 1つのカラムの値で分岐</h3>
+  <pre><span class="kw">SELECT</span>
+    name,
+    <span class="kw">CASE</span> department_id        <span class="cmt">-- カラム名を先に書く</span>
+        <span class="kw">WHEN</span> <span class="num">1</span> <span class="kw">THEN</span> <span class="str">'開発部'</span>
+        <span class="kw">WHEN</span> <span class="num">2</span> <span class="kw">THEN</span> <span class="str">'営業部'</span>
+        <span class="kw">WHEN</span> <span class="num">3</span> <span class="kw">THEN</span> <span class="str">'総務部'</span>
+        <span class="kw">ELSE</span>       <span class="str">'未所属'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> dept_name
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>CASE式はORDER BY・GROUP BY・WHERE でも使える</h3>
+  <pre><span class="cmt">-- ORDER BY: カスタム順序での並び替え（NULLを後ろに、など）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span>
+    <span class="kw">CASE WHEN</span> department_id <span class="kw">IS NULL THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span> <span class="kw">ASC</span>,
+    department_id <span class="kw">ASC</span>;
+
+<span class="cmt">-- GROUP BY: 集計のグループをCASEで作る</span>
+<span class="kw">SELECT</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> age < <span class="num">30</span> <span class="kw">THEN</span> <span class="str">'30歳未満'</span>
+        <span class="kw">ELSE</span>               <span class="str">'30歳以上'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> age_group,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> age < <span class="num">30</span> <span class="kw">THEN</span> <span class="str">'30歳未満'</span>
+        <span class="kw">ELSE</span>               <span class="str">'30歳以上'</span>
+    <span class="kw">END</span>;</pre>
+
+  <h3>括弧で1行にする書き方</h3>
+  <p>単純な条件分岐なら括弧でまとめてSELECT句やORDER BY句を1行で書ける。</p>
+  <pre><span class="cmt">-- ORDER BY での1行CASE（NULLを後ろに）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">ORDER BY</span>
+    (<span class="kw">CASE WHEN</span> department_id <span class="kw">IS NULL THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">ASC</span>,
+    department_id <span class="kw">ASC</span>,
+    age <span class="kw">DESC</span>;
+
+<span class="cmt">-- SELECT句での1行CASE（フラグを日本語ラベルに変換）</span>
+<span class="kw">SELECT</span>
+    name,
+    (<span class="kw">CASE WHEN</span> department_id <span class="kw">IS NULL THEN</span> <span class="str">'未所属'</span> <span class="kw">ELSE</span> <span class="str">'所属あり'</span> <span class="kw">END</span>) <span class="kw">AS</span> dept_status
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+  <div class="tip">WHEN～ENDが1パターンだけなら括弧でまとめて1行にするとすっきり読める。WEHNが複数になる場合は複数行に分けた方が見やすい。</div>
+
+  <div class="warn"><strong>⚠ ELSEを省略するとNULLになる</strong>
+ELSEを書かないと、どの条件にも当てはまらなかった場合の結果がNULLになる。意図していない場合は必ずELSEを書く。</div>
+</section>
+
+<!-- ===== GROUP BY ===== -->
+<section>
+  <h2 class="yellow">GROUP BY / HAVING / 集計関数</h2>
+  <p>データをグループ化して集計する。「部署ごとの人数」「ユーザーごとの合計金額」などを出すときに使う。</p>
+
+  <h3>集計関数一覧</h3>
+  <table>
+    <tr><th>関数</th><th>内容</th><th>例</th></tr>
+    <tr><td><span class="kw">COUNT(*)</span></td><td>行数を数える（NULLも含む）</td><td>COUNT(*) → 4</td></tr>
+    <tr><td><span class="kw">COUNT(col)</span></td><td>NULLを除いた行数</td><td>COUNT(department_id) → 3</td></tr>
+    <tr><td><span class="kw">SUM(col)</span></td><td>合計値</td><td>SUM(amount) → 13000</td></tr>
+    <tr><td><span class="kw">AVG(col)</span></td><td>平均値</td><td>AVG(age) → 32.0</td></tr>
+    <tr><td><span class="kw">MAX(col)</span></td><td>最大値</td><td>MAX(amount) → 8000</td></tr>
+    <tr><td><span class="kw">MIN(col)</span></td><td>最小値</td><td>MIN(age) → 23</td></tr>
+  </table>
+
+  <h3>GROUP BY — グループごとに集計</h3>
+  <pre><span class="cmt">-- 部署ごとの人数と平均年齢</span>
+<span class="kw">SELECT</span>
+    department_id,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> user_count,
+    <span class="kw">AVG</span>(age) <span class="kw">AS</span> avg_age
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span> department_id
+<span class="kw">ORDER BY</span> user_count <span class="kw">DESC</span>;</pre>
+
+  <h3>HAVING — グループに対して条件を絞る</h3>
+  <pre><span class="cmt">-- 人数が2人以上の部署だけ</span>
+<span class="kw">SELECT</span>
+    department_id,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> user_count
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span> department_id
+<span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) >= <span class="num">2</span>;</pre>
+
+  <div class="warn"><strong>⚠ WHERE と HAVING の違い</strong>
+WHERE  : グループ化「前」に行を絞る。集計関数（COUNT等）は使えない<br>
+HAVING : グループ化「後」に絞る。集計関数が使える<br><br>
+NG: WHERE COUNT(*) >= 2  ← 集計関数はWHEREに書けない<br>
+OK: HAVING COUNT(*) >= 2</div>
+
+  <h3>ROLLUP — 小計・合計を一緒に出す</h3>
+  <p>GROUP BYに <code>WITH ROLLUP</code> をつけると、グループごとの集計に加えて全体の合計行が自動で追加される。<span class="db-note">MySQL固有 / PostgreSQLはROLLUP()構文</span></p>
+  <pre><span class="cmt">-- 部署ごとの人数 + 全体合計を1つのSELECTで出す</span>
+<span class="kw">SELECT</span>
+    department_id,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> user_count
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span> department_id <span class="kw">WITH ROLLUP</span>;
+<span class="cmt">-- 結果イメージ:
+-- department_id | user_count
+-- 1             | 2          ← 部署1のグループ（山田・鈴木）
+-- 2             | 1          ← 部署2のグループ（田中）
+-- NULL          | 1          ← 部署NULLのグループ（佐藤）
+-- NULL          | 4          ← ROLLUPが追加した全体合計行
+--
+-- ⚠ 部署NULLのグループ行とROLLUPの合計行が両方NULLになるため区別できない。
+--   COALESCEをかけると佐藤さんの行も「全体合計」になってしまう（NG）。
+--   GROUPING()関数を使うとROLLUPが追加した行かどうかを区別できる。</span>
+
+<span class="cmt">-- NG: COALESCEだけだと佐藤さんの行も「全体合計」になってしまう</span>
+<span class="kw">SELECT</span>
+    <span class="kw">COALESCE</span>(<span class="kw">CAST</span>(department_id <span class="kw">AS</span> <span class="kw">CHAR</span>), <span class="str">'全体合計'</span>) <span class="kw">AS</span> dept,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> user_count
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span> department_id <span class="kw">WITH ROLLUP</span>;
+<span class="cmt">-- 結果: 1=2件, 2=1件, 全体合計=1件（佐藤）, 全体合計=4件（ROLLUP）← 区別できていない</span>
+
+<span class="cmt">-- OK: GROUPING()でROLLUPの合計行かどうかを判定する</span>
+<span class="cmt">-- GROUPING(col)はROLLUPが追加した行のとき1、通常のグループ行のとき0を返す</span>
+<span class="kw">SELECT</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="kw">GROUPING</span>(department_id) = <span class="num">1</span> <span class="kw">THEN</span> <span class="str">'全体合計'</span>   <span class="cmt">-- ROLLUPの合計行</span>
+        <span class="kw">WHEN</span> department_id <span class="kw">IS NULL</span>          <span class="kw">THEN</span> <span class="str">'未所属'</span>    <span class="cmt">-- 部署NULLのグループ（佐藤）</span>
+        <span class="kw">ELSE</span> <span class="kw">CAST</span>(department_id <span class="kw">AS</span> <span class="kw">CHAR</span>)
+    <span class="kw">END</span> <span class="kw">AS</span> dept,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> user_count
+<span class="kw">FROM</span>     <span class="tbl">users</span>
+<span class="kw">GROUP BY</span> department_id <span class="kw">WITH ROLLUP</span>;
+<span class="cmt">-- 結果: 1=2件, 2=1件, 未所属=1件（佐藤）, 全体合計=4件 ← 正しく区別できる</span></pre>
+
+  <h3>SQLの実行順序（書く順番と処理順序は違う）</h3>
+  <p>SQLは上から順に処理されるわけではない。内部ではこの順番で処理される。</p>
+  <div class="exec-order">
+    <div class="exec-step"><span class="nbadge">1</span><span class="clause">FROM</span><span class="edesc">テーブルを読む</span></div>
+    <div class="exec-step"><span class="nbadge">2</span><span class="clause">JOIN</span><span class="edesc">テーブルを結合する</span></div>
+    <div class="exec-step"><span class="nbadge">3</span><span class="clause">WHERE</span><span class="edesc">行を絞る（集計前）</span></div>
+    <div class="exec-step"><span class="nbadge">4</span><span class="clause">GROUP BY</span><span class="edesc">グループ化する</span></div>
+    <div class="exec-step"><span class="nbadge">5</span><span class="clause">HAVING</span><span class="edesc">グループを絞る（集計後）</span></div>
+    <div class="exec-step"><span class="nbadge">6</span><span class="clause">SELECT</span><span class="edesc">カラムを選ぶ</span></div>
+    <div class="exec-step"><span class="nbadge">7</span><span class="clause">ORDER BY</span><span class="edesc">並び替える</span></div>
+    <div class="exec-step"><span class="nbadge">8</span><span class="clause">LIMIT</span><span class="edesc">件数を制限する</span></div>
+  </div>
+</section>
+
+<!-- ===== JOIN ===== -->
+<section>
+  <h2 class="green">JOIN — テーブルを結合する</h2>
+  <p>複数のテーブルを横につなげて、一度に取得する。外部キーで紐づいているテーブル同士をつなぐのが基本。</p>
+
+  <h3>INNER JOIN — 両テーブルに一致するデータだけ取得</h3>
+  <p>users の department_id と departments の id が一致する行だけを結合する。<br>department_idがNULL（佐藤さん）は結果に含まれない。</p>
+
+  <div class="join-visual">
+    <div class="join-equation">
+      <div class="join-eq-table">
+        <div class="label">users</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>id</th><th>name</th><th>department_id</th></tr>
+          <tr><td>1</td><td>山田</td><td style="color:var(--yellow)">1</td></tr>
+          <tr><td>2</td><td>田中</td><td style="color:var(--yellow)">2</td></tr>
+          <tr><td>3</td><td>鈴木</td><td style="color:var(--yellow)">1</td></tr>
+          <tr><td>4</td><td>佐藤</td><td class="null-val">NULL</td></tr>
+        </table>
+      </div>
+      <div class="join-operator">⋈</div>
+      <div class="join-eq-table">
+        <div class="label">departments</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>id</th><th>name</th></tr>
+          <tr><td style="color:var(--yellow)">1</td><td>開発部</td></tr>
+          <tr><td style="color:var(--yellow)">2</td><td>営業部</td></tr>
+          <tr><td>3</td><td>総務部</td></tr>
+        </table>
+      </div>
+      <div class="join-operator">=</div>
+      <div class="join-eq-table">
+        <div class="label result">結果（INNER JOIN）</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>name</th><th>dept_name</th></tr>
+          <tr><td>山田</td><td>開発部</td></tr>
+          <tr><td>田中</td><td>営業部</td></tr>
+          <tr><td>鈴木</td><td>開発部</td></tr>
+          <tr><td style="color:var(--muted);font-style:italic" colspan="2">← 佐藤はNULLなので含まれない</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <pre><span class="kw">SELECT</span>
+    u.name,
+    d.name <span class="kw">AS</span> dept_name
+<span class="kw">FROM</span>       <span class="tbl">users</span>       u
+<span class="kw">INNER JOIN</span> <span class="tbl">departments</span> d <span class="kw">ON</span> u.department_id = d.id;</pre>
+
+  <h3>LEFT JOIN — 左テーブルは全件、右は一致しなければNULL</h3>
+  <p>users は全員取得される。departments に一致しない佐藤さんは dept_name が NULL になる。</p>
+
+  <div class="join-visual">
+    <div class="join-equation">
+      <div class="join-eq-table">
+        <div class="label">users（全件）</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>id</th><th>name</th><th>department_id</th></tr>
+          <tr><td>1</td><td>山田</td><td style="color:var(--yellow)">1</td></tr>
+          <tr><td>2</td><td>田中</td><td style="color:var(--yellow)">2</td></tr>
+          <tr><td>3</td><td>鈴木</td><td style="color:var(--yellow)">1</td></tr>
+          <tr><td>4</td><td style="color:var(--accent3)">佐藤</td><td class="null-val">NULL</td></tr>
+        </table>
+      </div>
+      <div class="join-operator">⟕</div>
+      <div class="join-eq-table">
+        <div class="label">departments</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>id</th><th>name</th></tr>
+          <tr><td style="color:var(--yellow)">1</td><td>開発部</td></tr>
+          <tr><td style="color:var(--yellow)">2</td><td>営業部</td></tr>
+          <tr><td>3</td><td>総務部</td></tr>
+        </table>
+      </div>
+      <div class="join-operator">=</div>
+      <div class="join-eq-table">
+        <div class="label result">結果（LEFT JOIN）</div>
+        <table class="sample-table" style="width:auto">
+          <tr><th>name</th><th>dept_name</th></tr>
+          <tr><td>山田</td><td>開発部</td></tr>
+          <tr><td>田中</td><td>営業部</td></tr>
+          <tr><td>鈴木</td><td>開発部</td></tr>
+          <tr><td style="color:var(--accent3)">佐藤</td><td class="null-val">NULL ← 一致なし</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <pre><span class="cmt">-- department_idがNULLの佐藤さんも含めて取得</span>
+<span class="kw">SELECT</span>
+    u.name,
+    d.name <span class="kw">AS</span> dept_name   <span class="cmt">-- 一致しない場合はNULLになる</span>
+<span class="kw">FROM</span>      <span class="tbl">users</span>       u
+<span class="kw">LEFT JOIN</span> <span class="tbl">departments</span> d <span class="kw">ON</span> u.department_id = d.id;</pre>
+
+  <table>
+    <tr><th>結合種類</th><th>取得されるデータ</th><th>よく使う場面</th></tr>
+    <tr><td>INNER JOIN</td><td>両テーブルに一致するもの</td><td>紐づくデータが必ずある場合</td></tr>
+    <tr><td>LEFT JOIN</td><td>左テーブル全件＋右の一致分</td><td>紐づかないデータも取りたい場合</td></tr>
+    <tr><td>RIGHT JOIN</td><td>右テーブル全件＋左の一致分</td><td>LEFT JOINでテーブルの順を入れ替えれば同じことができる</td></tr>
+  </table>
+
+  <h3>LEFT JOINで「どちらを左に置くか」の考え方</h3>
+  <p><strong>「全件漏らさず出したいテーブルを左に置く」</strong>というのが基本の判断軸。LEFT JOINは左のテーブルを必ず全行出して、右のテーブルは一致した行だけ付加するという動きをする。</p>
+  <p>言い換えると、<strong>「主役のテーブル」が左、「付加情報を取ってくるテーブル」が右</strong>。</p>
+  <pre><span class="cmt">-- 例1: 注文を全件出して、各注文のユーザー名を付加したい</span>
+<span class="cmt">-- → 主役は orders（全件出したい）、付加情報は users のname</span>
+<span class="kw">SELECT</span> o.id, o.amount, u.name
+<span class="kw">FROM</span>      <span class="tbl">orders</span> o          <span class="cmt">-- 主役（全件出す）が左</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">users</span>  u <span class="kw">ON</span> o.user_id = u.id;
+<span class="cmt">-- user_idがNULLの注文もNULLのまま出てくる</span>
+
+<span class="cmt">-- 例2: ユーザーを全員出して、各ユーザーの注文を付加したい</span>
+<span class="cmt">-- → 主役は users（全員出したい）、付加情報は orders</span>
+<span class="kw">SELECT</span> u.name, o.amount
+<span class="kw">FROM</span>      <span class="tbl">users</span>  u          <span class="cmt">-- 主役（全員出す）が左</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> u.id = o.user_id;
+<span class="cmt">-- 注文がないユーザーはamountがNULLで出てくる</span></pre>
+
+  <div class="tip">「行数が多い方を左に」という感覚は結果的に合っていることが多い。ただ本質は行数ではなく「どちらを全件出したいか」。行数が少なくても全員出したければそちらが左になる。迷ったら「このSELECTの主役は何か」を先に決めると判断しやすい。</div>
+
+  <h3>JOIN後は件数を確認する</h3>
+  <p>JOINすると元のテーブルより行数が増えることがある。「ユーザー一覧に部署情報を紐づけたいだけなのに行が増えた」というのはJOINミスの典型パターン。JOINの前後でCOUNTを比べる習慣をつけると気づきやすい。</p>
+  <pre><span class="cmt">-- 想定シナリオ:
+-- mastersテーブルに同じcodeが複数行存在していた場合</span>
+
+<span class="cmt">-- まずJOIN前の件数を確認（期待値）</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> <span class="tbl">transactions</span>;          <span class="cmt">-- 例: 1000件</span>
+
+<span class="cmt">-- JOINしてみる</span>
+<span class="kw">SELECT COUNT</span>(*)
+<span class="kw">FROM</span>       <span class="tbl">transactions</span> t
+<span class="kw">INNER JOIN</span> <span class="tbl">masters</span>      m <span class="kw">ON</span> t.code = m.code;  <span class="cmt">-- 3000件になった → 増えてる！</span>
+
+<span class="cmt">-- 原因を調べる: mastersにcodeの重複があるか確認</span>
+<span class="kw">SELECT</span> code, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span>     <span class="tbl">masters</span>
+<span class="kw">GROUP BY</span> code
+<span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) > <span class="num">1</span>;  <span class="cmt">-- 重複しているcodeが見つかる</span></pre>
+
+  <div class="warn"><strong>⚠ JOINで行が増えるのはマスタ側に重複があるサイン</strong>
+  LEFT JOINで「ユーザー1人に対して部署が複数紐づいていた」場合も同様に行が増える。JOIN後に意図しない件数になっていたら、まず結合キーの重複を疑う。</div>
+
+  <pre><span class="cmt">-- 対処パターン1: DISTINCT で重複を排除（一時的な応急処置）</span>
+<span class="kw">SELECT DISTINCT</span> t.*
+<span class="kw">FROM</span>       <span class="tbl">transactions</span> t
+<span class="kw">INNER JOIN</span> <span class="tbl">masters</span>      m <span class="kw">ON</span> t.code = m.code;
+
+<span class="cmt">-- 対処パターン2: サブクエリでマスタ側を先に1件に絞る（根本対処）</span>
+<span class="kw">SELECT</span> t.*
+<span class="kw">FROM</span>       <span class="tbl">transactions</span> t
+<span class="kw">INNER JOIN</span> (
+    <span class="kw">SELECT DISTINCT</span> code, name  <span class="cmt">-- 重複を除いた1件のマスタを作る</span>
+    <span class="kw">FROM</span> <span class="tbl">masters</span>
+) m <span class="kw">ON</span> t.code = m.code;</pre>
+</section>
+
+<!-- ===== エイリアス ===== -->
+<section>
+  <h2 class="gray">エイリアス（AS）</h2>
+  <p>テーブル名やカラム名に一時的な別名をつける機能。JOINでテーブル名が長くなるときに特に役立つ。</p>
+
+  <h3>カラムのエイリアス — 結果の列名を変える</h3>
+  <pre><span class="kw">SELECT</span>
+    name        <span class="kw">AS</span> ユーザー名,   <span class="cmt">-- 結果の列名が「ユーザー名」になる</span>
+    age         <span class="kw">AS</span> 年齢,
+    <span class="kw">COUNT</span>(*)    <span class="kw">AS</span> 件数          <span class="cmt">-- 集計結果にも名前をつけられる</span>
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>テーブルのエイリアス — JOINで必須レベルで使う</h3>
+  <pre><span class="cmt">-- u = users の略、d = departments の略</span>
+<span class="kw">SELECT</span>
+    u.name,          <span class="cmt">-- どのテーブルのnameか明示できる</span>
+    d.name <span class="kw">AS</span> dept
+<span class="kw">FROM</span>       <span class="tbl">users</span>       u  <span class="cmt">-- AS は省略可能</span>
+<span class="kw">INNER JOIN</span> <span class="tbl">departments</span> d <span class="kw">ON</span> u.department_id = d.id;</pre>
+
+  <div class="tip">AS は省略できる。FROM users u と書くだけでエイリアスになる。複数テーブルを使うときは u.name のようにテーブル名（エイリアス）を先頭につけてどちらのテーブルのカラムか明示する。</div>
+</section>
+
+<!-- ===== サブクエリ ===== -->
+<section>
+  <h2>サブクエリ</h2>
+  <p>クエリの中に別のクエリを埋め込む。集計結果や別テーブルの値を条件に使いたいときに使う。</p>
+
+  <h3>WHERE 句のサブクエリ</h3>
+  <pre><span class="cmt">-- 平均年齢より上のユーザーを取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> age > (
+    <span class="kw">SELECT</span> <span class="kw">AVG</span>(age) <span class="kw">FROM</span> <span class="tbl">users</span>
+);</pre>
+
+  <h3>FROM 句のサブクエリ（派生テーブル）</h3>
+  <pre><span class="cmt">-- 部署ごとの集計結果をさらに絞る</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>
+        department_id,
+        <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt
+    <span class="kw">FROM</span>     <span class="tbl">users</span>
+    <span class="kw">GROUP BY</span> department_id
+) <span class="kw">AS</span> dept_summary       <span class="cmt">-- サブクエリにもエイリアスが必要</span>
+<span class="kw">WHERE</span> cnt >= <span class="num">2</span>;</pre>
+
+  <h3>EXISTS — サブクエリで存在確認</h3>
+  <pre><span class="cmt">-- 注文が1件でも存在するユーザーだけ取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tbl">orders</span> o  <span class="cmt">-- 1は存在確認だけなので何でもいい</span>
+    <span class="kw">WHERE</span> o.user_id = u.id
+);</pre>
+
+  <div class="tip">EXISTS は IN より高速なことが多い。大量データを扱う場合は EXISTS を優先する。</div>
+
+  <h3>SELECT 句のサブクエリ（スカラサブクエリ）</h3>
+  <p>SELECT句の取得列としてサブクエリを書く。必ず1行1列（スカラ値）を返すサブクエリでなければならない。外側のクエリの各行に対して1回ずつ実行される。</p>
+  <pre><span class="cmt">-- 各ユーザーの注文合計金額を列として付加する</span>
+<span class="kw">SELECT</span>
+    u.id,
+    u.name,
+    (<span class="kw">SELECT</span> <span class="kw">SUM</span>(amount)
+     <span class="kw">FROM</span>  <span class="tbl">orders</span> o
+     <span class="kw">WHERE</span> o.user_id = u.id   <span class="cmt">-- 外側のu.idを参照（相関サブクエリ）</span>
+    ) <span class="kw">AS</span> total_amount
+<span class="kw">FROM</span> <span class="tbl">users</span> u;
+
+<span class="cmt">-- 各ユーザーの部署名を列として付加する</span>
+<span class="kw">SELECT</span>
+    u.name,
+    (<span class="kw">SELECT</span> d.name
+     <span class="kw">FROM</span>  <span class="tbl">departments</span> d
+     <span class="kw">WHERE</span> d.id = u.department_id
+    ) <span class="kw">AS</span> dept_name   <span class="cmt">-- JOINの代わりに列として取得するパターン</span>
+<span class="kw">FROM</span> <span class="tbl">users</span> u;</pre>
+
+  <div class="warn"><strong>⚠ スカラサブクエリは2行以上返すとエラーになる</strong>
+サブクエリが複数行を返す場合（結合キーに重複がある場合など）は実行時エラーになる。必ず1行1列になることを確認してから使う。<br>
+また外側の行数分だけサブクエリが実行されるため、大量データでは遅くなりやすい。JOINで書き直せる場合はJOINの方が速いことが多い。</div>
+
+  <pre><span class="cmt">-- 上記の「部署名を付加する」クエリをJOINで書き直した場合</span>
+<span class="cmt">-- 動作は同じだがこちらの方が一般的に速い</span>
+<span class="kw">SELECT</span>
+    u.name,
+    d.name <span class="kw">AS</span> dept_name
+<span class="kw">FROM</span>      <span class="tbl">users</span>       u
+<span class="kw">LEFT JOIN</span> <span class="tbl">departments</span> d <span class="kw">ON</span> u.department_id = d.id;</pre>
+</section>
+
+<!-- ===== UNION ===== -->
+<section>
+  <h2>UNION / UNION ALL — 複数のSELECT結果を縦に結合する</h2>
+  <p>2つ以上のSELECT結果を縦につなげて1つの結果にする。JOINが「横に結合」するのに対し、UNIONは「縦に結合」するイメージ。</p>
+
+  <h3>JOINとUNIONの違い</h3>
+  <div class="er-wrap">
+    <svg viewBox="0 0 820 220" xmlns="http://www.w3.org/2000/svg" width="820" style="max-width:100%">
+      <!-- JOIN -->
+      <text x="10" y="18" fill="#4ade80" font-size="12" font-weight="700">JOIN — 横に結合（カラムが増える）</text>
+      <!-- usersテーブル -->
+      <rect x="10" y="28" width="160" height="70" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="90" y="46" text-anchor="middle" fill="#4f9eff" font-size="11" font-weight="700">users</text>
+      <text x="90" y="62" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name</text>
+      <text x="90" y="76" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">1  | 山田</text>
+      <text x="90" y="89" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">2  | 田中</text>
+      <!-- + -->
+      <text x="178" y="68" fill="#64748b" font-size="22">+</text>
+      <!-- departmentsテーブル -->
+      <rect x="200" y="28" width="160" height="70" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="280" y="46" text-anchor="middle" fill="#4f9eff" font-size="11" font-weight="700">departments</text>
+      <text x="280" y="62" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name</text>
+      <text x="280" y="76" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">1  | 開発部</text>
+      <text x="280" y="89" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">2  | 営業部</text>
+      <!-- → -->
+      <text x="368" y="68" fill="#4ade80" font-size="22">→</text>
+      <!-- 結果 -->
+      <rect x="395" y="28" width="230" height="70" rx="4" fill="#1a1e2e" stroke="#4ade80" stroke-width="1.5"/>
+      <text x="510" y="46" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="700">結果（横に広がる）</text>
+      <text x="510" y="62" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name | dept_name</text>
+      <text x="510" y="76" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">1  | 山田 | 開発部</text>
+      <text x="510" y="89" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">2  | 田中 | 営業部</text>
+
+      <!-- UNION -->
+      <text x="10" y="130" fill="#fbbf24" font-size="12" font-weight="700">UNION — 縦に結合（行が増える）</text>
+      <!-- クエリA -->
+      <rect x="10" y="142" width="160" height="60" rx="4" fill="#1a1e2e" stroke="#fbbf24"/>
+      <text x="90" y="160" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">クエリA の結果</text>
+      <text x="90" y="176" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name</text>
+      <text x="90" y="189" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">1  | 山田</text>
+      <!-- + -->
+      <text x="178" y="178" fill="#64748b" font-size="22">+</text>
+      <!-- クエリB -->
+      <rect x="200" y="142" width="160" height="60" rx="4" fill="#1a1e2e" stroke="#fbbf24"/>
+      <text x="280" y="160" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">クエリB の結果</text>
+      <text x="280" y="176" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name</text>
+      <text x="280" y="189" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">3  | 佐藤</text>
+      <!-- → -->
+      <text x="368" y="178" fill="#fbbf24" font-size="22">→</text>
+      <!-- 結果 -->
+      <rect x="395" y="142" width="160" height="72" rx="4" fill="#1a1e2e" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="475" y="160" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">結果（縦に増える）</text>
+      <text x="475" y="175" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">id | name</text>
+      <text x="475" y="188" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">1  | 山田</text>
+      <text x="475" y="201" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace">3  | 佐藤</text>
+    </svg>
+  </div>
+  <p>JOINは「同じ行に別テーブルの情報を付け加える」（カラムが増える）。UNIONは「別々の検索結果を1つにまとめる」（行が増える）。目的が全く違う。</p>
+
+  <h3>UNION — 重複を除いて結合</h3>
+  <pre><span class="cmt">-- 開発部のユーザーと、30歳以上のユーザーを合わせて取得（重複は除く）</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> department_id = <span class="num">1</span>
+<span class="kw">UNION</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> age >= <span class="num">30</span>;
+<span class="cmt">-- 両方の条件に当てはまる人は1件だけ出てくる</span></pre>
+
+  <h3>UNION ALL — 重複を除かずに結合</h3>
+  <pre><span class="cmt">-- 重複をそのまま残して結合（DISTINCTの処理がない分速い）</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> department_id = <span class="num">1</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> age >= <span class="num">30</span>;
+<span class="cmt">-- 両方の条件に当てはまる人は2件出てくる（重複あり）</span></pre>
+
+  <table>
+    <tr><th></th><th>UNION</th><th>UNION ALL</th></tr>
+    <tr><td>重複</td><td>除く（DISTINCTと同じ処理が走る）</td><td>除かない</td></tr>
+    <tr><td>速度</td><td>遅い（重複除去のためにソートが走る）</td><td>速い</td></tr>
+    <tr><td>使いどころ</td><td>重複が出ることがわかっていて除きたい場合</td><td>重複が出ないことがわかっている場合・意図的に全件欲しい場合</td></tr>
+  </table>
+
+  <div class="warn"><strong>⚠ UNIONの制約</strong>
+  ① 全てのSELECTのカラム数と型が一致していなければならない<br>
+  ② ORDER BYは最後のSELECTにだけ書く（全体の並び替えになる）<br>
+  ③ 重複が出ないことがわかっている場合はUNION ALLを使う（UNIONは不要なソートが走る）</div>
+
+  <pre><span class="cmt">-- 実務でよくあるパターン: 異なるステータスを1つにまとめる</span>
+<span class="kw">SELECT</span> <span class="str">'completed'</span> <span class="kw">AS</span> status, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status = <span class="str">'completed'</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'pending'</span>,               <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status = <span class="str">'pending'</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'cancelled'</span>,             <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status = <span class="str">'cancelled'</span>
+<span class="kw">ORDER BY</span> cnt <span class="kw">DESC</span>;  <span class="cmt">-- ORDER BYは最後だけに書く</span></pre>
+
+  <h3>INTERSECT / EXCEPT — 共通部分・差分を取る</h3>
+  <div class="warn"><strong>⚠ MySQL 8.0.31以降でないと使えない</strong>
+  INTERSECTとEXCEPTはMySQL 8.0.31以降で追加された機能。それ以前のバージョンでは使えない。PostgreSQL・SQLiteは古いバージョンから対応している。本番環境のMySQLバージョンを必ず確認すること。<span class="db-note">DB固有</span></div>
+
+  <pre><span class="cmt">-- INTERSECT: 両方のSELECT結果に共通する行だけを取得（AND的な発想）</span>
+<span class="cmt">-- 「開発部に所属している」かつ「30歳以上」のユーザー</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> department_id = <span class="num">1</span>
+<span class="kw">INTERSECT</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> age >= <span class="num">30</span>;
+
+<span class="cmt">-- EXCEPT: 左のSELECT結果から右のSELECT結果を引いた行を取得（差集合）</span>
+<span class="cmt">-- 「開発部に所属している」が「30歳以上ではない」ユーザー</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> department_id = <span class="num">1</span>
+<span class="kw">EXCEPT</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> age >= <span class="num">30</span>;
+<span class="cmt">-- ※ OracleではEXCEPTではなくMINUSを使う</span></pre>
+
+  <table>
+    <tr><th>演算子</th><th>意味</th><th>イメージ</th><th>WHEREで代替できるか</th></tr>
+    <tr><td>UNION</td><td>AとBを合体（重複除去）</td><td>A ∪ B</td><td>ORで代替できることがある</td></tr>
+    <tr><td>UNION ALL</td><td>AとBを合体（重複残す）</td><td>A + B 全件</td><td>—</td></tr>
+    <tr><td>INTERSECT</td><td>AとBの共通部分</td><td>A ∩ B</td><td>ANDで代替できることがある</td></tr>
+    <tr><td>EXCEPT</td><td>AからBを除いた部分</td><td>A - B</td><td>NOT INやNOT EXISTSで代替できる</td></tr>
+  </table>
+</section>
+
+<!-- ===== VIEW ===== -->
+<section>
+  <h2>VIEW — クエリに名前をつけて使い回す</h2>
+  <p>複雑なSELECTに名前をつけて保存する仕組み。呼び出すたびに元のSQLが実行される仮想テーブル。実際のデータは持たない。</p>
+
+  <h3>VIEWを使う場面</h3>
+  <table>
+    <tr><th>使う場面</th><th>具体例</th></tr>
+    <tr><td>複雑なJOINを毎回書きたくない</td><td>users・departments・ordersを結合した一覧を毎回書く代わりにVIEWとして保存</td></tr>
+    <tr><td>特定のカラムだけ公開したい</td><td>パスワードやメールを除いた安全なユーザー情報ビュー</td></tr>
+    <tr><td>集計結果を使い回したい</td><td>部署ごとの月次集計をVIEWにして複数のレポートから参照</td></tr>
+  </table>
+
+  <pre><span class="cmt">-- VIEWの作成</span>
+<span class="kw">CREATE VIEW</span> user_dept_view <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    u.id,
+    u.name,
+    u.age,
+    d.name <span class="kw">AS</span> dept_name
+<span class="kw">FROM</span>      <span class="tbl">users</span>       u
+<span class="kw">LEFT JOIN</span> <span class="tbl">departments</span> d <span class="kw">ON</span> u.department_id = d.id;
+
+<span class="cmt">-- テーブルと同じように使える</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> user_dept_view <span class="kw">WHERE</span> dept_name = <span class="str">'開発部'</span>;
+
+<span class="cmt">-- VIEWの削除</span>
+<span class="kw">DROP VIEW</span> user_dept_view;
+
+<span class="cmt">-- VIEWの定義を確認</span>
+<span class="kw">SHOW CREATE VIEW</span> user_dept_view;</pre>
+
+  <div class="warn"><strong>⚠ VIEWは基本「参照専用」として使う</strong>
+  特定の条件（1テーブルのみ参照・GROUP BYやDISTINCTなし等）を満たすVIEWはUPDATE/INSERTができてしまう場合がある。意図しない更新事故を防ぐため、VIEWには基本的にSELECTだけを行い、更新は元テーブルに対して実施する運用にしておく方が安全。更新可能かどうかの詳細はDB設計・運用の教材で扱う。
+  </div>
+</section>
+
+<!-- ===== アップサート ===== -->
+<section>
+  <h2 class="orange">アップサート — あれば更新、なければ挿入</h2>
+  <p>同じキー（主キーや一意キー）のデータがすでに存在すれば UPDATE、なければ INSERT を1文で行う。DBによって構文が異なる。</p>
+
+  <h3>MySQL <span class="db-note">MySQL固有</span></h3>
+  <pre><span class="kw">INSERT INTO</span> <span class="tbl">users</span> (id, name, age)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="str">'山田 太郎'</span>, <span class="num">33</span>)
+<span class="cmt">-- ↑ まずINSERTを試みる。id=1 がすでに存在すれば重複エラーが発生する</span>
+<span class="kw">ON DUPLICATE KEY UPDATE</span>
+<span class="cmt">-- ↑ 重複エラーが発生した場合にここのUPDATEを実行する（エラーにはならない）</span>
+    name = <span class="kw">VALUES</span>(name),  <span class="cmt">-- VALUES(カラム名) = 「今INSERTしようとした値」を参照する</span>
+    age  = <span class="kw">VALUES</span>(age);   <span class="cmt">-- つまり VALUES(1, '山田 太郎', 33) の中の値のこと</span></pre>
+
+  <div class="tip">VALUES(col) の書き方はMySQL 8.0.20以降では非推奨。代わりに <code>name = alias.name</code> の形（行エイリアス）を使うことが推奨されている。<span class="db-note">MySQL固有</span></div>
+
+  <h3>PostgreSQL <span class="db-note">PostgreSQL固有</span></h3>
+  <pre><span class="kw">INSERT INTO</span> <span class="tbl">users</span> (id, name, age)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="str">'山田 太郎'</span>, <span class="num">33</span>)
+<span class="cmt">-- ↑ まずINSERTを試みる</span>
+<span class="kw">ON CONFLICT</span> (id)
+<span class="cmt">-- ↑ id カラムで重複が起きた場合（主キー重複など）</span>
+<span class="kw">DO UPDATE SET</span>
+<span class="cmt">-- ↑ 重複したら以下のUPDATEを実行する</span>
+    name = <span class="kw">EXCLUDED</span>.name,
+<span class="cmt">--        ↑ EXCLUDED = 「今INSERTしようとした値」を指す特別なキーワード</span>
+<span class="cmt">--          つまり VALUES で指定した '山田 太郎' のこと</span>
+    age  = <span class="kw">EXCLUDED</span>.age;  <span class="cmt">-- 同様に VALUES の 33 のこと</span></pre>
+
+  <div class="tip">MySQLは ON DUPLICATE KEY UPDATE、PostgreSQLは ON CONFLICT ... DO UPDATE SET と書き方が違う。どちらも「重複したら更新する」という意味は同じ。</div>
+</section>
+
+<!-- ===== ウィンドウ関数 ===== -->
+<section>
+  <h2 class="purple">ウィンドウ関数</h2>
+  <p>GROUP BYと似ているが「行を集約せずに」集計値を各行に付加できる。ランキングや累計計算で使う。</p>
+
+  <table>
+    <tr><th></th><th>GROUP BY</th><th>ウィンドウ関数</th></tr>
+    <tr><td>結果行数</td><td>グループ数に減る</td><td>元の行数のまま</td></tr>
+    <tr><td>用途</td><td>集計サマリ</td><td>各行に集計値を付加</td></tr>
+    <tr><td>構文</td><td>GROUP BY col</td><td>OVER (PARTITION BY col)</td></tr>
+  </table>
+
+  <h3>基本構文</h3>
+  <pre>関数名() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> グループ化するカラム  <span class="cmt">-- GROUP BY相当（省略可）</span>
+    <span class="kw">ORDER BY</span>     並び順               <span class="cmt">-- 省略可</span>
+)</pre>
+
+  <h3>ROW_NUMBER / RANK / DENSE_RANK — ランキング</h3>
+  <pre><span class="cmt">-- 部署ごとに年齢の高い順でランキング</span>
+<span class="kw">SELECT</span>
+    name,
+    department_id,
+    age,
+    <span class="kw">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> department_id <span class="kw">ORDER BY</span> age <span class="kw">DESC</span>) <span class="kw">AS</span> row_num,
+    <span class="kw">RANK</span>()        <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> department_id <span class="kw">ORDER BY</span> age <span class="kw">DESC</span>) <span class="kw">AS</span> rank_num,
+    <span class="kw">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> department_id <span class="kw">ORDER BY</span> age <span class="kw">DESC</span>) <span class="kw">AS</span> dense_rank_num
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <table>
+    <tr><th>関数</th><th>同順位があるとき</th><th>例（同率2位が2人）</th></tr>
+    <tr><td>ROW_NUMBER</td><td>同順位でも連番</td><td>1, 2, 3, 4</td></tr>
+    <tr><td>RANK</td><td>同順位は同じ番号、次をスキップ</td><td>1, 2, 2, 4</td></tr>
+    <tr><td>DENSE_RANK</td><td>同順位は同じ番号、スキップなし</td><td>1, 2, 2, 3</td></tr>
+  </table>
+
+  <h3>SUM — 累計</h3>
+  <pre><span class="cmt">-- ユーザーごとの累計注文金額</span>
+<span class="kw">SELECT</span>
+    user_id,
+    ordered_at,
+    amount,
+    <span class="kw">SUM</span>(amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> user_id    <span class="cmt">-- ユーザーごとに区切る</span>
+        <span class="kw">ORDER BY</span>     ordered_at  <span class="cmt">-- 注文日順に累計する</span>
+    ) <span class="kw">AS</span> cumulative_amount
+<span class="kw">FROM</span> <span class="tbl">orders</span>;</pre>
+
+  <h3>LAG / LEAD — 前後の行の値を取得</h3>
+  <pre><span class="cmt">-- 前の注文金額と比較（LAG: 前の行 / LEAD: 次の行）</span>
+<span class="kw">SELECT</span>
+    user_id,
+    ordered_at,
+    amount,
+    <span class="kw">LAG</span>(amount, <span class="num">1</span>) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> user_id
+        <span class="kw">ORDER BY</span>     ordered_at
+    ) <span class="kw">AS</span> prev_amount  <span class="cmt">-- 1つ前の注文金額（先頭行はNULL）</span>
+<span class="kw">FROM</span> <span class="tbl">orders</span>;</pre>
+
+  <div class="tip">ウィンドウ関数は SELECT 句にしか書けない。WHERE や HAVING には書けないので、条件で使いたい場合はサブクエリで包む。</div>
+</section>
+
+<!-- ===== 検証ツール ===== -->
+<section>
+  <h2 class="gray">検証ツール</h2>
+  <p>書いたSQLが正しいか、実行前に確認できるツール。</p>
+  <table>
+    <tr><th>ツール名</th><th>特徴</th><th>URL</th></tr>
+    <tr><td>SQLite Online</td><td>ブラウザ上でSQLをそのまま実行できる</td><td>sqliteonline.com</td></tr>
+    <tr><td>DB Fiddle</td><td>MySQL / PostgreSQL / SQLite対応</td><td>db-fiddle.com</td></tr>
+    <tr><td>ExplainExtended</td><td>実行計画の確認（パフォーマンス確認）</td><td>explainextended.com</td></tr>
+  </table>
+  <div class="tip">エラーが出たらまずここで確認する。ただし実データは使わずダミーデータに差し替えてから貼ること。</div>
+</section>
+
+<!-- ===== 付録: 型一覧 ===== -->
+<section>
+  <h2 class="gray">付録 — 代表的なDBの型一覧と比較</h2>
+  <p>DB間で型名が異なる場合がある。移行・比較の際の参照として使う。</p>
+
+  <h3>数値型</h3>
+  <table>
+    <tr><th>用途</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th><th>使いどころ</th></tr>
+    <tr><td>小さい整数・フラグ</td><td>TINYINT(1)</td><td>BOOLEAN / SMALLINT</td><td>INTEGER</td><td>0/1フラグ。PostgreSQLはBOOLEAN型が使える</td></tr>
+    <tr><td>汎用整数（ID等）</td><td>INT</td><td>INTEGER / INT4</td><td>INTEGER</td><td>主キー・外部キー・件数・金額（円）に最もよく使う</td></tr>
+    <tr><td>大きい整数</td><td>BIGINT</td><td>BIGINT / INT8</td><td>INTEGER</td><td>大量データのid・Unix時間ミリ秒。SQLiteはINTEGERのみで内部的に8byteまで対応</td></tr>
+    <tr><td>誤差なし小数</td><td>DECIMAL(M,D)</td><td>NUMERIC(M,D)</td><td>REAL / NUMERIC</td><td>金額・税率など誤差が許されない小数。DECIMAL(10,2)で最大9999万9999.99</td></tr>
+    <tr><td>浮動小数点</td><td>FLOAT / DOUBLE</td><td>REAL / DOUBLE PRECISION</td><td>REAL</td><td>誤差が許される科学計算。金額には使わない</td></tr>
+    <tr><td>自動採番</td><td>INT AUTO_INCREMENT</td><td>SERIAL / GENERATED ALWAYS AS IDENTITY</td><td>INTEGER PRIMARY KEY</td><td>主キーの自動採番。PostgreSQLはSERIALよりIDENTITYが新しい書き方</td></tr>
+  </table>
+
+  <h3>文字列型</h3>
+  <table>
+    <tr><th>用途</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th><th>使いどころ</th></tr>
+    <tr><td>固定長文字列</td><td>CHAR(N)</td><td>CHAR(N)</td><td>TEXT</td><td>郵便番号・電話番号など長さが固定のもの。SQLiteは実質TEXTに統合</td></tr>
+    <tr><td>可変長文字列</td><td>VARCHAR(N)</td><td>VARCHAR(N) / TEXT</td><td>TEXT</td><td>名前・メール・タイトルなど最もよく使う。PostgreSQLはTEXT型に長さ制限なしで使える</td></tr>
+    <tr><td>長い文章</td><td>TEXT / MEDIUMTEXT / LONGTEXT</td><td>TEXT</td><td>TEXT</td><td>本文・コメント。PostgreSQLはTEXT一種類で65,535byte以上も対応</td></tr>
+    <tr><td>選択肢固定</td><td>ENUM('a','b',...)</td><td>カスタムTYPEまたはVARCHAR+CHECK制約</td><td>TEXT + CHECK制約</td><td>MySQLのENUMは値追加にALTER TABLEが必要。PostgreSQLはCREATE TYPEで列挙型を作れる</td></tr>
+  </table>
+
+  <h3>日時型</h3>
+  <table>
+    <tr><th>用途</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th><th>使いどころ・注意点</th></tr>
+    <tr><td>日付のみ</td><td>DATE</td><td>DATE</td><td>TEXT / INTEGER</td><td>生年月日・期日。SQLiteは日時型がなくTEXT（ISO形式）かUnix秒で管理する</td></tr>
+    <tr><td>日時（TZ変換なし）</td><td>DATETIME</td><td>TIMESTAMP WITHOUT TIME ZONE</td><td>TEXT / INTEGER</td><td>作成日時・更新日時。アプリ側でTZ管理する場合はこちら</td></tr>
+    <tr><td>日時（TZ変換あり）</td><td>TIMESTAMP ※2038年問題あり</td><td>TIMESTAMP WITH TIME ZONE（TIMESTAMPTZ）</td><td>INTEGER（Unix秒）</td><td>PostgreSQLのTIMESTAMPTZは保存時にUTC変換・取得時にセッションTZで返す。MySQLのTIMESTAMPは2038年1月19日以降を保存できない</td></tr>
+    <tr><td>時刻のみ</td><td>TIME</td><td>TIME</td><td>TEXT</td><td>営業時間・所要時間</td></tr>
+  </table>
+
+  <h3>バイナリ・JSON・その他</h3>
+  <table>
+    <tr><th>用途</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th><th>使いどころ</th></tr>
+    <tr><td>バイナリ</td><td>BLOB / MEDIUMBLOB / LONGBLOB</td><td>BYTEA</td><td>BLOB</td><td>画像・ファイル。実務ではファイルはストレージに置きパスをVARCHARで管理する方が多い</td></tr>
+    <tr><td>JSON</td><td>JSON（5.7.8以降）</td><td>JSON / JSONB</td><td>TEXT</td><td>PostgreSQLのJSONBはバイナリ形式で保存され検索・インデックスが高速。MySQLのJSONは検索は可能だがJSONBより遅い</td></tr>
+    <tr><td>配列</td><td>なし（JSONで代替）</td><td>TEXT[] / INT[] など配列型</td><td>なし</td><td>PostgreSQLは配列型をネイティブサポート。MySQL・SQLiteはJSONか別テーブルで代替</td></tr>
+    <tr><td>UUID</td><td>VARCHAR(36) または BINARY(16)</td><td>UUID型</td><td>TEXT</td><td>PostgreSQLはUUID型をネイティブサポートし関数で生成できる</td></tr>
+  </table>
+
+  <h3>型の選び方 — よくある判断基準</h3>
+  <table>
+    <tr><th>データ</th><th>推奨型（MySQL）</th><th>推奨型（PostgreSQL）</th><th>理由・注意</th></tr>
+    <tr><td>主キー（id）</td><td>INT AUTO_INCREMENT / BIGINT</td><td>SERIAL / BIGSERIAL / IDENTITY</td><td>将来の行数が多くなるならBIGINT/BIGSERIAL</td></tr>
+    <tr><td>金額（円）</td><td>INT または DECIMAL(10,2)</td><td>INTEGER または NUMERIC(10,2)</td><td>円単位ならINT。小数が必要ならDECIMAL。FLOATは誤差が出るので不可</td></tr>
+    <tr><td>メールアドレス</td><td>VARCHAR(255)</td><td>VARCHAR(255) または TEXT</td><td>RFC上の最大長は254文字。255で十分</td></tr>
+    <tr><td>パスワード（ハッシュ）</td><td>VARCHAR(255)</td><td>TEXT</td><td>bcryptは60文字・SHA-256は64文字。アルゴリズムに合わせる</td></tr>
+    <tr><td>フラグ・真偽値</td><td>TINYINT(1)</td><td>BOOLEAN</td><td>MySQLにBOOLEAN型はなくTINYINT(1)のエイリアス</td></tr>
+    <tr><td>作成日時・更新日時</td><td>DATETIME</td><td>TIMESTAMP WITH TIME ZONE</td><td>MySQLのTIMESTAMPは2038年問題あり。新規設計ではDATETIMEを推奨</td></tr>
+    <tr><td>ステータス（固定選択肢）</td><td>ENUM または VARCHAR</td><td>カスタムTYPEまたはVARCHAR+CHECK</td><td>ENUMは値追加にALTER TABLEが必要。変更が多いならVARCHAR</td></tr>
+    <tr><td>郵便番号</td><td>CHAR(8)</td><td>CHAR(8)</td><td>「123-4567」で固定長8文字</td></tr>
+  </table>
+</section>
+
+<!-- ===== 付録: 関数・構文の方言比較 ===== -->
+<section>
+  <h2 class="gray">付録 — 関数・構文の方言比較表</h2>
+  <p>現場で一番ググる内容。DB間で書き方が違うものをまとめた辞書として使う。</p>
+
+  <h3>文字列操作</h3>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>文字列結合</td><td><code>CONCAT(a, b)</code> または <code>CONCAT_WS(',', a, b)</code></td><td><code>a || b</code> または <code>CONCAT(a, b)</code></td><td><code>a || b</code></td></tr>
+    <tr><td>文字列長（文字数）</td><td><code>CHAR_LENGTH(str)</code></td><td><code>LENGTH(str)</code></td><td><code>LENGTH(str)</code></td></tr>
+    <tr><td>文字列長（バイト数）</td><td><code>LENGTH(str)</code></td><td><code>OCTET_LENGTH(str)</code></td><td><code>LENGTH(str)</code></td></tr>
+    <tr><td>大文字変換</td><td><code>UPPER(str)</code></td><td><code>UPPER(str)</code></td><td><code>UPPER(str)</code></td></tr>
+    <tr><td>小文字変換</td><td><code>LOWER(str)</code></td><td><code>LOWER(str)</code></td><td><code>LOWER(str)</code></td></tr>
+    <tr><td>部分文字列取得</td><td><code>SUBSTRING(str, start, len)</code></td><td><code>SUBSTRING(str, start, len)</code></td><td><code>SUBSTR(str, start, len)</code></td></tr>
+    <tr><td>前後の空白除去</td><td><code>TRIM(str)</code></td><td><code>TRIM(str)</code></td><td><code>TRIM(str)</code></td></tr>
+    <tr><td>文字列置換</td><td><code>REPLACE(str, from, to)</code></td><td><code>REPLACE(str, from, to)</code></td><td><code>REPLACE(str, from, to)</code></td></tr>
+    <tr><td>文字列の位置検索</td><td><code>LOCATE(needle, haystack)</code> または <code>INSTR()</code></td><td><code>POSITION(needle IN haystack)</code> または <code>STRPOS()</code></td><td><code>INSTR(haystack, needle)</code></td></tr>
+    <tr><td>左/右からN文字取得</td><td><code>LEFT(str, n)</code> / <code>RIGHT(str, n)</code></td><td><code>LEFT(str, n)</code> / <code>RIGHT(str, n)</code></td><td><code>SUBSTR(str, 1, n)</code> で代替</td></tr>
+    <tr><td>文字埋め（左）</td><td><code>LPAD(str, len, pad)</code></td><td><code>LPAD(str, len, pad)</code></td><td>組み込み関数なし（式で代替）</td></tr>
+    <tr><td>正規表現一致</td><td><code>str REGEXP 'pattern'</code></td><td><code>str ~ 'pattern'</code></td><td><code>str REGEXP 'pattern'</code>（3.38以降）</td></tr>
+  </table>
+
+  <h3>日付・時刻操作</h3>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>現在日時</td><td><code>NOW()</code> または <code>CURRENT_TIMESTAMP</code></td><td><code>NOW()</code> または <code>CURRENT_TIMESTAMP</code></td><td><code>datetime('now')</code></td></tr>
+    <tr><td>現在日付</td><td><code>CURDATE()</code> または <code>CURRENT_DATE</code></td><td><code>CURRENT_DATE</code></td><td><code>date('now')</code></td></tr>
+    <tr><td>現在時刻</td><td><code>CURTIME()</code> または <code>CURRENT_TIME</code></td><td><code>CURRENT_TIME</code></td><td><code>time('now')</code></td></tr>
+    <tr><td>年を取り出す</td><td><code>YEAR(date)</code></td><td><code>EXTRACT(YEAR FROM date)</code> または <code>DATE_PART('year', date)</code></td><td><code>strftime('%Y', date)</code></td></tr>
+    <tr><td>月を取り出す</td><td><code>MONTH(date)</code></td><td><code>EXTRACT(MONTH FROM date)</code></td><td><code>strftime('%m', date)</code></td></tr>
+    <tr><td>日を取り出す</td><td><code>DAY(date)</code></td><td><code>EXTRACT(DAY FROM date)</code></td><td><code>strftime('%d', date)</code></td></tr>
+    <tr><td>日付を加算する</td><td><code>DATE_ADD(date, INTERVAL n DAY)</code></td><td><code>date + INTERVAL 'n days'</code></td><td><code>date(date, '+n days')</code></td></tr>
+    <tr><td>日付の差（日数）</td><td><code>DATEDIFF(date1, date2)</code></td><td><code>date1 - date2</code>（整数で返る）</td><td><code>julianday(d1) - julianday(d2)</code></td></tr>
+    <tr><td>日付を書式化</td><td><code>DATE_FORMAT(date, '%Y-%m-%d')</code></td><td><code>TO_CHAR(date, 'YYYY-MM-DD')</code></td><td><code>strftime('%Y-%m-%d', date)</code></td></tr>
+    <tr><td>文字列→日付に変換</td><td><code>STR_TO_DATE(str, '%Y/%m/%d')</code></td><td><code>TO_DATE(str, 'YYYY/MM/DD')</code></td><td><code>date(str)</code>（ISO形式のみ）</td></tr>
+  </table>
+
+  <h3>型変換</h3>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>型変換（標準SQL）</td><td><code>CAST(val AS type)</code></td><td><code>CAST(val AS type)</code></td><td><code>CAST(val AS type)</code></td></tr>
+    <tr><td>型変換（省略記法）</td><td>なし</td><td><code>val::type</code>（例: <code>val::integer</code>）</td><td>なし</td></tr>
+    <tr><td>NULLを別値に置換</td><td><code>IFNULL(val, default)</code> または <code>COALESCE(val, default)</code></td><td><code>COALESCE(val, default)</code></td><td><code>IFNULL(val, default)</code> または <code>COALESCE()</code></td></tr>
+    <tr><td>0をNULLに変換（ゼロ除算防止）</td><td><code>NULLIF(val, 0)</code></td><td><code>NULLIF(val, 0)</code></td><td><code>NULLIF(val, 0)</code></td></tr>
+    <tr><td>条件分岐（IFの省略）</td><td><code>IF(条件, 真, 偽)</code></td><td>なし（CASE式を使う）</td><td><code>IIF(条件, 真, 偽)</code></td></tr>
+  </table>
+
+  <h3>集計・ウィンドウ関数</h3>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>グループ内の値を結合</td><td><code>GROUP_CONCAT(col SEPARATOR ',')</code></td><td><code>STRING_AGG(col, ',')</code></td><td><code>GROUP_CONCAT(col, ',')</code></td></tr>
+    <tr><td>ROW_NUMBER</td><td>8.0以降対応</td><td>対応</td><td>3.25以降対応</td></tr>
+    <tr><td>RANK / DENSE_RANK</td><td>8.0以降対応</td><td>対応</td><td>3.25以降対応</td></tr>
+    <tr><td>中央値</td><td>組み込みなし（変数で代替）</td><td><code>PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY col)</code></td><td>組み込みなし</td></tr>
+  </table>
+
+  <h3>その他・便利関数</h3>
+  <table>
+    <tr><th>操作</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+    <tr><td>乱数</td><td><code>RAND()</code></td><td><code>RANDOM()</code></td><td><code>RANDOM()</code></td></tr>
+    <tr><td>絶対値</td><td><code>ABS(n)</code></td><td><code>ABS(n)</code></td><td><code>ABS(n)</code></td></tr>
+    <tr><td>切り捨て</td><td><code>FLOOR(n)</code> / <code>TRUNCATE(n, d)</code></td><td><code>FLOOR(n)</code> / <code>TRUNC(n, d)</code></td><td><code>CAST(n AS INTEGER)</code></td></tr>
+    <tr><td>四捨五入</td><td><code>ROUND(n, d)</code></td><td><code>ROUND(n, d)</code></td><td><code>ROUND(n, d)</code></td></tr>
+    <tr><td>複数カラムの最大・最小（行内比較）</td><td><code>GREATEST(a,b,...)</code> / <code>LEAST(a,b,...)</code></td><td><code>GREATEST(a,b,...)</code> / <code>LEAST(a,b,...)</code></td><td><code>MAX(a,b,...)</code> / <code>MIN(a,b,...)</code>（複数引数版）</td></tr>
+    <tr><td>ランダムサンプリング</td><td><code>ORDER BY RAND() LIMIT n</code></td><td><code>ORDER BY RANDOM() LIMIT n</code></td><td><code>ORDER BY RANDOM() LIMIT n</code></td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>

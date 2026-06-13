@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL 中級〜上級 — EXPLAIN・CTE・VIEW・シーケンス編</title>
+<style>
+  :root {
+    --bg:#0d0f18;--surface:#141720;--surface2:#1a1e2e;--border:#252a3d;
+    --accent:#4f9eff;--accent2:#ff6b6b;--accent3:#4ade80;
+    --yellow:#fbbf24;--purple:#a78bfa;--orange:#fb923c;
+    --text:#e2e8f0;--muted:#64748b;--code-bg:#0a0c14;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.75;padding:48px 24px;}
+  .container{max-width:920px;margin:0 auto;}
+  header{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:48px;}
+  header h1{font-size:30px;font-weight:800;letter-spacing:-0.5px;}
+  header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  section{margin-bottom:64px;}
+  h2{font-size:20px;font-weight:700;padding-left:14px;border-left:3px solid var(--accent);margin-bottom:16px;}
+  h2.red{border-color:var(--accent2);}h2.green{border-color:var(--accent3);}
+  h2.yellow{border-color:var(--yellow);}h2.purple{border-color:var(--purple);}
+  h2.orange{border-color:var(--orange);}h2.gray{border-color:var(--muted);}
+  h3{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:28px 0 10px;}
+  p{margin-bottom:12px;line-height:1.8;}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:'Fira Code','Courier New',monospace;font-size:13.5px;line-height:1.9;margin:10px 0;}
+  .kw{color:#61b8ff;font-weight:600;}.str{color:#4ade80;}.num{color:#fbbf24;}.cmt{color:#4a5568;font-style:italic;}.tbl{color:#fb923c;font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  th{background:var(--surface2);color:var(--muted);font-weight:700;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.8;}
+  .warn strong{color:var(--yellow);display:block;margin-bottom:6px;}
+  .tip{background:rgba(79,158,255,.07);border:1px solid rgba(79,158,255,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;color:#93c5fd;line-height:1.8;}
+  .tip::before{content:"💡 ";}
+  .bad{color:var(--accent2);}.good{color:var(--accent3);}
+  .db-note{display:inline-block;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);border-radius:4px;padding:1px 8px;font-size:11px;color:var(--purple);font-weight:700;margin-left:6px;}
+  .er-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:24px;margin:16px 0;overflow-x:auto;}
+  .er-wrap svg{display:block;margin:0 auto;}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  @media(max-width:600px){.compare{grid-template-columns:1fr;}}
+  .cbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .cbox-title{font-size:13px;font-weight:700;margin-bottom:10px;}
+  .improve-box{border:1px solid var(--border);border-radius:8px;margin:16px 0;overflow:hidden;}
+  .improve-header{background:var(--surface2);padding:10px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .improve-badge{padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;}
+  .improve-badge.before{background:rgba(255,107,107,.2);color:var(--accent2);}
+  .improve-badge.after{background:rgba(74,222,128,.2);color:var(--accent3);}
+  .improve-body{padding:14px 16px;}
+  code{font-family:'Fira Code','Courier New',monospace;font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>SQL 中級〜上級 — EXPLAIN実践・CTE・VIEW・シーケンス編</h1>
+  <p>クエリを読み解き、設計を洗練させるための知識</p>
+</header>
+
+<!-- ===== EXPLAIN実践 ===== -->
+<section>
+  <h2 class="yellow">EXPLAIN実践 — スロークエリを特定して改善する</h2>
+  <p>EXPLAINは「このSQLをDBがどう実行するか」の計画を表示する。インデックスが効いているか、フルスキャンが起きていないかを確認するための必須ツール。</p>
+
+  <h3>スロークエリ改善の流れ</h3>
+  <div class="er-wrap" style="padding:16px">
+    <svg viewBox="0 0 700 60" xmlns="http://www.w3.org/2000/svg" width="700" style="max-width:100%">
+      <rect x="0"   y="10" width="120" height="36" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="60"  y="33" text-anchor="middle" fill="#4f9eff" font-size="12">① 遅いクエリを特定</text>
+      <text x="128" y="33" fill="#64748b" font-size="18">→</text>
+      <rect x="140" y="10" width="130" height="36" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="205" y="29" text-anchor="middle" fill="#4f9eff" font-size="12">② EXPLAINで</text>
+      <text x="205" y="43" text-anchor="middle" fill="#4f9eff" font-size="12">実行計画を確認</text>
+      <text x="278" y="33" fill="#64748b" font-size="18">→</text>
+      <rect x="290" y="10" width="120" height="36" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="350" y="29" text-anchor="middle" fill="#4f9eff" font-size="12">③ 問題箇所を</text>
+      <text x="350" y="43" text-anchor="middle" fill="#4f9eff" font-size="12">特定する</text>
+      <text x="418" y="33" fill="#64748b" font-size="18">→</text>
+      <rect x="430" y="10" width="120" height="36" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="490" y="29" text-anchor="middle" fill="#4f9eff" font-size="12">④ インデックス追加</text>
+      <text x="490" y="43" text-anchor="middle" fill="#4f9eff" font-size="12">やSQL書き直し</text>
+      <text x="558" y="33" fill="#64748b" font-size="18">→</text>
+      <rect x="570" y="10" width="120" height="36" rx="4" fill="#1a1e2e" stroke="#4ade80"/>
+      <text x="630" y="29" text-anchor="middle" fill="#4ade80" font-size="12">⑤ 再度EXPLAIN</text>
+      <text x="630" y="43" text-anchor="middle" fill="#4ade80" font-size="12">で改善を確認</text>
+    </svg>
+  </div>
+
+  <h3>スロークエリログの有効化（MySQL）</h3>
+  <pre><span class="cmt">-- スロークエリログを有効にする（2秒以上かかったクエリを記録）</span>
+<span class="kw">SET</span> GLOBAL slow_query_log       = <span class="str">'ON'</span>;
+<span class="kw">SET</span> GLOBAL long_query_time      = <span class="num">2</span>;       <span class="cmt">-- 2秒以上を記録</span>
+<span class="kw">SET</span> GLOBAL slow_query_log_file  = <span class="str">'/var/log/mysql/slow.log'</span>;
+
+<span class="cmt">-- インデックスを使わないクエリも記録する（開発時に便利）</span>
+<span class="kw">SET</span> GLOBAL log_queries_not_using_indexes = <span class="str">'ON'</span>;</pre>
+
+  <h3>実際のEXPLAIN出力を読む</h3>
+  <pre><span class="cmt">-- 問題のあるクエリ例</span>
+<span class="kw">EXPLAIN SELECT</span>
+    u.name,
+    <span class="kw">COUNT</span>(o.id) <span class="kw">AS</span> order_count
+<span class="kw">FROM</span>       <span class="tbl">users</span>  u
+<span class="kw">INNER JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> u.id = o.user_id
+<span class="kw">WHERE</span>    <span class="kw">YEAR</span>(u.created_at) = <span class="num">2024</span>  <span class="cmt">-- ← SARGable違反</span>
+<span class="kw">GROUP BY</span> u.id, u.name;</pre>
+
+  <pre><span class="cmt">-- EXPLAINの出力イメージ</span>
+<span class="cmt">-- id | type | key    | rows    | Extra</span>
+<span class="cmt">-- 1  | ALL  | NULL   | 1000000 | Using where; Using temporary; Using filesort</span>
+<span class="cmt">--    ↑フルスキャン  ↑インデックス未使用  ↑一時テーブル+filesortで最悪の状態</span></pre>
+
+  <div class="improve-box">
+    <div class="improve-header">
+      <span class="improve-badge before">Before — type=ALL, rows=100万</span>
+    </div>
+    <div class="improve-body">
+      <pre style="margin:0"><span class="kw">SELECT</span> u.name, <span class="kw">COUNT</span>(o.id) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span>       <span class="tbl">users</span>  u
+<span class="kw">INNER JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> u.id = o.user_id
+<span class="kw">WHERE</span>    <span class="kw">YEAR</span>(u.created_at) = <span class="num">2024</span>
+<span class="kw">GROUP BY</span> u.id, u.name;</pre>
+    </div>
+  </div>
+
+  <div class="improve-box">
+    <div class="improve-header">
+      <span class="improve-badge after">After — type=range, rows=数千（インデックスで絞れる）</span>
+    </div>
+    <div class="improve-body">
+      <pre style="margin:0"><span class="cmt">-- ① SARGableに書き直す（関数をやめて範囲指定に）</span>
+<span class="cmt">-- ② orders.user_id にインデックスを追加</span>
+<span class="kw">CREATE INDEX</span> idx_orders_user_id   <span class="kw">ON</span> <span class="tbl">orders</span> (user_id);
+<span class="kw">CREATE INDEX</span> idx_users_created_at <span class="kw">ON</span> <span class="tbl">users</span>  (created_at);
+
+<span class="kw">SELECT</span> u.name, <span class="kw">COUNT</span>(o.id) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span>       <span class="tbl">users</span>  u
+<span class="kw">INNER JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> u.id = o.user_id
+<span class="kw">WHERE</span>    u.created_at >= <span class="str">'2024-01-01'</span>
+  <span class="kw">AND</span>  u.created_at <  <span class="str">'2025-01-01'</span>
+<span class="kw">GROUP BY</span> u.id, u.name;</pre>
+    </div>
+  </div>
+
+  <h3>EXPLAIN ANALYZE — 実際の実行時間を計測する（PostgreSQL）</h3>
+  <pre><span class="cmt">-- EXPLAIN ANALYZEは実際にSQLを実行して計測する（本番DBでは注意）</span>
+<span class="kw">EXPLAIN ANALYZE SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> email = <span class="str">'user@example.com'</span>;
+
+<span class="cmt">-- 出力例:</span>
+<span class="cmt">-- Index Scan using idx_users_email on users</span>
+<span class="cmt">--   Index Cond: (email = 'user@example.com')</span>
+<span class="cmt">--   Planning Time: 0.1 ms</span>
+<span class="cmt">--   Execution Time: 0.05 ms  ← 実際の実行時間</span></pre>
+
+  <div class="warn"><strong>⚠ EXPLAIN ANALYZEはUPDATE/DELETEにも使えるが実際に実行される</strong>
+本番DBで UPDATE や DELETE に EXPLAIN ANALYZE を使うと実際にデータが変更される。必ずSELECTか、トランザクション内でROLLBACKできる状態で使う。<span class="db-note">PostgreSQL固有</span></div>
+
+  <h3>統計情報とANALYZE</h3>
+  <p>DBオプティマイザはテーブルの統計情報（行数・値の分布等）をもとに実行計画を決める。統計情報が古いと最適でない計画が選ばれることがある。</p>
+  <pre><span class="cmt">-- MySQL: テーブルの統計情報を更新する</span>
+<span class="kw">ANALYZE TABLE</span> <span class="tbl">users</span>;
+<span class="kw">ANALYZE TABLE</span> <span class="tbl">orders</span>;
+
+<span class="cmt">-- PostgreSQL: 統計情報を更新する</span>
+<span class="kw">ANALYZE</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- 現在のテーブル統計を確認（MySQL）</span>
+<span class="kw">SELECT</span>
+    table_name,
+    table_rows,
+    data_length,
+    index_length
+<span class="kw">FROM</span>   information_schema.tables
+<span class="kw">WHERE</span>  table_schema = <span class="str">'your_database'</span>
+<span class="kw">ORDER BY</span> data_length <span class="kw">DESC</span>;</pre>
+  <div class="tip">大量のINSERT/DELETE後はANALYZEを実行すると実行計画が改善されることがある。多くのDBは自動で統計情報を更新するが、急激にデータが変化した場合は手動実行が有効。</div>
+</section>
+
+<!-- ===== CTE ===== -->
+<section>
+  <h2 class="green">CTE（WITH句） — クエリを分かりやすく分割する</h2>
+  <p>CTE（Common Table Expression）はWITH句で名前付きの一時的なクエリ結果を定義する機能。複雑なサブクエリを名前で参照できるようになり、可読性が大幅に上がる。</p>
+
+  <div class="compare">
+    <div class="cbox">
+      <div class="cbox-title bad">✗ サブクエリのネストで読みにくい</div>
+      <pre style="margin:0;font-size:12px"><span class="kw">SELECT</span> u.name, ds.total
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">INNER JOIN</span> (
+    <span class="kw">SELECT</span>
+        user_id,
+        <span class="kw">SUM</span>(amount) <span class="kw">AS</span> total
+    <span class="kw">FROM</span>     <span class="tbl">orders</span>
+    <span class="kw">WHERE</span>    status = <span class="str">'completed'</span>
+    <span class="kw">GROUP BY</span> user_id
+    <span class="kw">HAVING</span>   <span class="kw">SUM</span>(amount) > <span class="num">10000</span>
+) ds <span class="kw">ON</span> u.id = ds.user_id;</pre>
+    </div>
+    <div class="cbox">
+      <div class="cbox-title good">✓ CTEで名前をつけて読みやすくする</div>
+      <pre style="margin:0;font-size:12px"><span class="kw">WITH</span> heavy_buyers <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        user_id,
+        <span class="kw">SUM</span>(amount) <span class="kw">AS</span> total
+    <span class="kw">FROM</span>     <span class="tbl">orders</span>
+    <span class="kw">WHERE</span>    status = <span class="str">'completed'</span>
+    <span class="kw">GROUP BY</span> user_id
+    <span class="kw">HAVING</span>   <span class="kw">SUM</span>(amount) > <span class="num">10000</span>
+)
+<span class="kw">SELECT</span> u.name, hb.total
+<span class="kw">FROM</span>       <span class="tbl">users</span>       u
+<span class="kw">INNER JOIN</span> heavy_buyers hb <span class="kw">ON</span> u.id = hb.user_id;</pre>
+    </div>
+  </div>
+
+  <h3>複数のCTEを組み合わせる</h3>
+  <pre><span class="cmt">-- カンマで区切って複数定義できる</span>
+<span class="kw">WITH</span>
+completed_orders <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> user_id, <span class="kw">SUM</span>(amount) <span class="kw">AS</span> total
+    <span class="kw">FROM</span>     <span class="tbl">orders</span>
+    <span class="kw">WHERE</span>    status = <span class="str">'completed'</span>
+    <span class="kw">GROUP BY</span> user_id
+),
+heavy_buyers <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> completed_orders  <span class="cmt">-- 前のCTEを参照できる</span>
+    <span class="kw">WHERE</span>  total > <span class="num">10000</span>
+)
+<span class="kw">SELECT</span>
+    u.name,
+    hb.total
+<span class="kw">FROM</span>       <span class="tbl">users</span>       u
+<span class="kw">INNER JOIN</span> heavy_buyers hb <span class="kw">ON</span> u.id = hb.user_id
+<span class="kw">ORDER BY</span>   hb.total <span class="kw">DESC</span>;</pre>
+
+  <h3>再帰CTE — 階層構造を扱う</h3>
+  <p>親子関係・組織図・カテゴリツリーなど、自己参照するデータを扱うときに使う。</p>
+  <pre><span class="cmt">-- 例: カテゴリの階層構造（親カテゴリ→子カテゴリ→孫カテゴリ）</span>
+<span class="cmt">-- categories テーブル: id, name, parent_id</span>
+
+<span class="kw">WITH RECURSIVE</span> category_tree <span class="kw">AS</span> (
+    <span class="cmt">-- ① アンカー（起点）: 最上位カテゴリ（parent_id が NULL）</span>
+    <span class="kw">SELECT</span>
+        id,
+        name,
+        parent_id,
+        <span class="num">0</span> <span class="kw">AS</span> depth,             <span class="cmt">-- 階層の深さ</span>
+        name <span class="kw">AS</span> path             <span class="cmt">-- パス文字列</span>
+    <span class="kw">FROM</span>  <span class="tbl">categories</span>
+    <span class="kw">WHERE</span> parent_id <span class="kw">IS NULL</span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cmt">-- ② 再帰（自分自身を参照）: 子カテゴリを順番に展開</span>
+    <span class="kw">SELECT</span>
+        c.id,
+        c.name,
+        c.parent_id,
+        ct.depth + <span class="num">1</span>,
+        ct.path || <span class="str">' > '</span> || c.name
+    <span class="kw">FROM</span>       <span class="tbl">categories</span>   c
+    <span class="kw">INNER JOIN</span> category_tree ct <span class="kw">ON</span> c.parent_id = ct.id
+)
+<span class="kw">SELECT</span> depth, name, path
+<span class="kw">FROM</span>   category_tree
+<span class="kw">ORDER BY</span> path;</pre>
+
+  <pre><span class="cmt">-- 出力イメージ</span>
+<span class="cmt">-- depth | name     | path</span>
+<span class="cmt">-- 0     | 電子機器  | 電子機器</span>
+<span class="cmt">-- 1     | パソコン  | 電子機器 > パソコン</span>
+<span class="cmt">-- 2     | ノートPC  | 電子機器 > パソコン > ノートPC</span>
+<span class="cmt">-- 2     | デスクトップ | 電子機器 > パソコン > デスクトップ</span>
+<span class="cmt">-- 1     | スマホ    | 電子機器 > スマホ</span></pre>
+
+  <div class="warn"><strong>⚠ 再帰CTEには無限ループのリスクがある</strong>
+データに循環参照（A→B→C→A のような構造）があると無限ループになる。MySQLは最大再帰数の上限（デフォルト1000）があるが、PostgreSQLはCYCLE句で対策できる。データの整合性を確認してから使う。<span class="db-note">DB固有</span></div>
+</section>
+
+<!-- ===== CASE式 ===== -->
+<section>
+  <h2>CASE式 — SQLの条件分岐</h2>
+  <p>CASE式はSQLの中で条件分岐を書く構文。SELECT句・WHERE句・ORDER BY句・GROUP BY句のどこでも使える。</p>
+
+  <h3>単純CASE式と検索CASE式</h3>
+  <pre><span class="cmt">-- 単純CASE式: 1つのカラムの値で分岐</span>
+<span class="kw">SELECT</span>
+    name,
+    status,
+    <span class="kw">CASE</span> status
+        <span class="kw">WHEN</span> <span class="str">'active'</span>   <span class="kw">THEN</span> <span class="str">'有効'</span>
+        <span class="kw">WHEN</span> <span class="str">'inactive'</span> <span class="kw">THEN</span> <span class="str">'無効'</span>
+        <span class="kw">WHEN</span> <span class="str">'pending'</span>  <span class="kw">THEN</span> <span class="str">'審査中'</span>
+        <span class="kw">ELSE</span>                  <span class="str">'不明'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> status_label
+<span class="kw">FROM</span> <span class="tbl">users</span>;
+
+<span class="cmt">-- 検索CASE式: 条件式で分岐（より柔軟）</span>
+<span class="kw">SELECT</span>
+    name,
+    age,
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> age < <span class="num">20</span> <span class="kw">THEN</span> <span class="str">'未成年'</span>
+        <span class="kw">WHEN</span> age < <span class="num">65</span> <span class="kw">THEN</span> <span class="str">'成人'</span>
+        <span class="kw">ELSE</span>               <span class="str">'シニア'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> age_group
+<span class="kw">FROM</span> <span class="tbl">users</span>;</pre>
+
+  <h3>集計とCASE式の組み合わせ（ピボット）</h3>
+  <p>縦持ちのデータを横持ちに変換するときによく使う。</p>
+  <pre><span class="cmt">-- orders テーブル: status（completed/pending/cancelled）ごとの件数を横並びに</span>
+<span class="kw">SELECT</span>
+    <span class="kw">COUNT</span>(<span class="kw">CASE WHEN</span> status = <span class="str">'completed'</span>  <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>) <span class="kw">AS</span> completed_count,
+    <span class="kw">COUNT</span>(<span class="kw">CASE WHEN</span> status = <span class="str">'pending'</span>    <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>) <span class="kw">AS</span> pending_count,
+    <span class="kw">COUNT</span>(<span class="kw">CASE WHEN</span> status = <span class="str">'cancelled'</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>) <span class="kw">AS</span> cancelled_count,
+    <span class="kw">SUM</span>(<span class="kw">CASE WHEN</span>   status = <span class="str">'completed'</span>  <span class="kw">THEN</span> amount <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> completed_amount
+<span class="kw">FROM</span> <span class="tbl">orders</span>;</pre>
+
+  <h3>CASE式でORDER BYをカスタマイズ</h3>
+  <pre><span class="cmt">-- ステータスの表示順をビジネスロジックに合わせる</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span>
+    <span class="kw">CASE</span> status
+        <span class="kw">WHEN</span> <span class="str">'pending'</span>    <span class="kw">THEN</span> <span class="num">1</span>  <span class="cmt">-- 審査中を最優先</span>
+        <span class="kw">WHEN</span> <span class="str">'completed'</span>  <span class="kw">THEN</span> <span class="num">2</span>
+        <span class="kw">WHEN</span> <span class="str">'cancelled'</span> <span class="kw">THEN</span> <span class="num">3</span>
+        <span class="kw">ELSE</span> <span class="num">4</span>
+    <span class="kw">END</span>,
+    created_at <span class="kw">DESC</span>;</pre>
+</section>
+
+<!-- ===== VIEW ===== -->
+<section>
+  <h2 class="purple">VIEW — クエリに名前をつけて再利用する</h2>
+  <p>よく使うクエリを仮想テーブルとして保存する機能。実データは持たず、参照するたびに元のSQLが実行される。</p>
+
+  <h3>VIEWの作成と使い方</h3>
+  <pre><span class="cmt">-- VIEWの作成: ユーザーとロールを結合した一覧</span>
+<span class="kw">CREATE VIEW</span> user_role_view <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    u.id,
+    u.name,
+    u.email,
+    r.name  <span class="kw">AS</span> role_name
+<span class="kw">FROM</span>       <span class="tbl">users</span>       u
+<span class="kw">INNER JOIN</span> <span class="tbl">user_roles</span>  ur <span class="kw">ON</span> u.id      = ur.user_id
+<span class="kw">INNER JOIN</span> <span class="tbl">roles</span>       r  <span class="kw">ON</span> ur.role_id = r.id;
+
+<span class="cmt">-- VIEWはテーブルと同じように使える</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> user_role_view <span class="kw">WHERE</span> role_name = <span class="str">'admin'</span>;
+
+<span class="cmt">-- VIEWの更新</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> user_role_view <span class="kw">AS</span>
+<span class="kw">SELECT</span> <span class="cmt">-- ... 新しいクエリ</span>
+
+<span class="cmt">-- VIEWの削除</span>
+<span class="kw">DROP VIEW</span> user_role_view;</pre>
+
+  <h3>VIEWを使うべき場面・使わない方がいい場面</h3>
+  <table>
+    <tr><th>使うべき場面</th><th>使わない方がいい場面</th></tr>
+    <tr><td>複雑なJOINを毎回書かずに済む</td><td>パフォーマンスが重要な処理（VIEWは毎回実行される）</td></tr>
+    <tr><td>特定のカラムだけを公開するアクセス制御</td><td>VIEWを重ねて使う（VIEW on VIEWは特に遅くなる）</td></tr>
+    <tr><td>ビジネスロジックをSQLレベルで共通化する</td><td>更新・削除が必要な場合（単純なVIEWでないと不可）</td></tr>
+  </table>
+
+  <div class="tip">マテリアライズドビュー（Materialized View）はVIEWの結果を実際に保存する機能。PostgreSQLで使える。参照が多いが更新が少ないデータに有効。<span class="db-note">PostgreSQL固有</span></div>
+
+  <pre><span class="cmt">-- PostgreSQL: マテリアライズドビュー</span>
+<span class="kw">CREATE MATERIALIZED VIEW</span> order_summary <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    user_id,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> order_count,
+    <span class="kw">SUM</span>(amount) <span class="kw">AS</span> total_amount
+<span class="kw">FROM</span>     <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> user_id;
+
+<span class="cmt">-- データを最新化する（手動実行が必要）</span>
+<span class="kw">REFRESH MATERIALIZED VIEW</span> order_summary;</pre>
+</section>
+
+<!-- ===== シーケンス ===== -->
+<section>
+  <h2 class="orange">シーケンス — 連番を生成する</h2>
+  <p>重複しない連番（1, 2, 3, ...）を生成する仕組み。主キーのAUTO_INCREMENTに使われているが、明示的に使うこともできる。</p>
+
+  <h3>MySQLのAUTO_INCREMENT</h3>
+  <pre><span class="cmt">-- MySQLでは AUTO_INCREMENT で自動採番</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">orders</span> (
+    id     <span class="kw">INT PRIMARY KEY AUTO_INCREMENT</span>,
+    amount <span class="kw">INT NOT NULL</span>
+);
+
+<span class="cmt">-- 現在の AUTO_INCREMENT 値を確認</span>
+<span class="kw">SHOW TABLE STATUS LIKE</span> <span class="str">'orders'</span>;
+<span class="cmt">-- Auto_increment カラムに次の採番値が表示される</span>
+
+<span class="cmt">-- AUTO_INCREMENT の値をリセット（TRUNCATEすると自動でリセットされる）</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">AUTO_INCREMENT</span> = <span class="num">1</span>;</pre>
+
+  <h3>PostgreSQLのSEQUENCE</h3>
+  <pre><span class="cmt">-- PostgreSQLではSEQUENCEオブジェクトを明示的に作れる</span>
+<span class="kw">CREATE SEQUENCE</span> order_id_seq
+    <span class="kw">START</span>     <span class="num">1</span>       <span class="cmt">-- 開始値</span>
+    <span class="kw">INCREMENT</span> <span class="num">1</span>       <span class="cmt">-- 増分</span>
+    <span class="kw">MINVALUE</span>  <span class="num">1</span>       <span class="cmt">-- 最小値</span>
+    <span class="kw">NO MAXVALUE</span>       <span class="cmt">-- 上限なし</span>
+    <span class="kw">CACHE</span>     <span class="num">1</span>;      <span class="cmt">-- キャッシュ数（性能に影響）</span>
+
+<span class="cmt">-- テーブルのカラムに紐づける</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">orders</span> (
+    id     <span class="kw">INT DEFAULT NEXTVAL</span>(<span class="str">'order_id_seq'</span>) <span class="kw">PRIMARY KEY</span>,
+    amount <span class="kw">INT NOT NULL</span>
+);
+
+<span class="cmt">-- または SERIAL / GENERATED ALWAYS AS IDENTITY（より推奨）</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">orders</span> (
+    id     <span class="kw">INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+    amount <span class="kw">INT NOT NULL</span>
+);
+
+<span class="cmt">-- シーケンスの現在値を取得・操作</span>
+<span class="kw">SELECT NEXTVAL</span>(<span class="str">'order_id_seq'</span>);  <span class="cmt">-- 次の値を取得（値が進む）</span>
+<span class="kw">SELECT CURRVAL</span>(<span class="str">'order_id_seq'</span>);  <span class="cmt">-- 現在のセッションの最後の値</span>
+<span class="kw">SELECT SETVAL</span>(<span class="str">'order_id_seq'</span>, <span class="num">1000</span>);  <span class="cmt">-- 値をリセット</span></pre>
+
+  <h3>シーケンスの注意点</h3>
+  <table>
+    <tr><th>注意点</th><th>理由</th></tr>
+    <tr><td>連番に歯抜けが発生することがある</td><td>ROLLBACKしてもシーケンスは戻らない。採番後にトランザクションが失敗すると番号が飛ぶ</td></tr>
+    <tr><td>最大値に達するとエラーになる</td><td>INT型の上限（約21億）を超えるとエラー。BIGINTを使うか定期的に監視する</td></tr>
+    <tr><td>TRUNCATE後もシーケンスは進む（MySQLのみリセット）</td><td>PostgreSQLはTRUNCATEしてもシーケンスはリセットされない</td></tr>
+  </table>
+
+  <div class="warn"><strong>⚠ シーケンスの連番に「欠番があってはいけない」ケースは設計を見直す</strong>
+会計の伝票番号など「欠番が許されない」要件がある場合、AUTO_INCREMENTやシーケンスでは実現できない。別途採番テーブルを用意してトランザクション内で管理する必要がある。</div>
+</section>
+
+<!-- ===== チェックリスト ===== -->
+<section>
+  <h2 class="gray">実務チェックリスト</h2>
+  <table>
+    <tr><th>確認項目</th><th>確認方法 / 対処</th></tr>
+    <tr><td>遅いクエリをEXPLAINで確認しているか</td><td>type=ALL / rows が大きい / Using filesort があれば改善を検討</td></tr>
+    <tr><td>複雑なサブクエリはCTEに書き直せるか</td><td>ネストが深いサブクエリはWITH句で名前をつけると可読性が上がる</td></tr>
+    <tr><td>再帰CTEにループ上限の考慮があるか</td><td>データに循環参照がないか確認。MySQLはMAXRECURSIONオプションで上限設定</td></tr>
+    <tr><td>VIEWがパフォーマンスのボトルネックになっていないか</td><td>VIEWのEXPLAINも確認できる。VIEW on VIEWは特に注意</td></tr>
+    <tr><td>CASE式でELSEを省略していないか</td><td>ELSEを省略するとNULLが返る。意図していない場合はELSE句を入れる</td></tr>
+    <tr><td>シーケンス/AUTO_INCREMENTの上限を把握しているか</td><td>INT型は約21億まで。大規模システムはBIGINTを使う</td></tr>
+    <tr><td>統計情報が古くなっていないか</td><td>大量データ変更後はANALYZE TABLEを実行する</td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>

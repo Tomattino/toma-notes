@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ER図 基礎教材</title>
+<style>
+  :root {
+    --bg:#0d0f18;--surface:#141720;--surface2:#1a1e2e;--border:#252a3d;
+    --accent:#4f9eff;--accent2:#ff6b6b;--accent3:#4ade80;
+    --yellow:#fbbf24;--purple:#a78bfa;--orange:#fb923c;
+    --text:#e2e8f0;--muted:#64748b;--code-bg:#0a0c14;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.75;padding:48px 24px;}
+  .container{max-width:900px;margin:0 auto;}
+  header{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:48px;}
+  header h1{font-size:30px;font-weight:800;letter-spacing:-0.5px;}
+  header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  section{margin-bottom:60px;}
+  h2{font-size:20px;font-weight:700;padding-left:14px;border-left:3px solid var(--accent);margin-bottom:16px;}
+  h2.red{border-color:var(--accent2);}h2.green{border-color:var(--accent3);}
+  h2.yellow{border-color:var(--yellow);}h2.purple{border-color:var(--purple);}h2.gray{border-color:var(--muted);}
+  h3{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:28px 0 10px;}
+  p{margin-bottom:12px;line-height:1.8;}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:'Fira Code','Courier New',monospace;font-size:13.5px;line-height:1.9;margin:10px 0;}
+  .kw{color:#61b8ff;font-weight:600;}.str{color:#4ade80;}.num{color:#fbbf24;}.cmt{color:#4a5568;font-style:italic;}.tbl{color:#fb923c;font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  th{background:var(--surface2);color:var(--muted);font-weight:700;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.8;}
+  .warn strong{color:var(--yellow);display:block;margin-bottom:6px;}
+  .tip{background:rgba(79,158,255,.07);border:1px solid rgba(79,158,255,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;color:#93c5fd;line-height:1.8;}
+  .tip::before{content:"💡 ";}
+  .term-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0;}
+  .term-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .term-card .term{font-weight:700;color:var(--accent);font-size:15px;margin-bottom:4px;}
+  .term-card .desc{color:var(--muted);font-size:13px;line-height:1.6;}
+  .er-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:24px;margin:16px 0;overflow-x:auto;}
+  .er-wrap svg{display:block;margin:0 auto;}
+  .table-def{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:12px 0;font-size:13px;}
+  .table-def .tbl-header{background:var(--surface);padding:10px 16px;font-weight:700;color:var(--orange);font-family:'Fira Code','Courier New',monospace;border-bottom:1px solid var(--border);}
+  .table-def table{margin:0;}.table-def td,.table-def th{padding:8px 14px;font-size:13px;}
+  .pk{color:var(--yellow);font-weight:700;}.fk{color:var(--accent);}.uq{color:var(--accent3);}
+  .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  @media(max-width:600px){.card-grid{grid-template-columns:1fr;}}
+  .card-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .card-box .card-title{font-weight:700;color:var(--accent3);margin-bottom:8px;font-size:14px;}
+  .card-box .card-desc{color:var(--muted);font-size:13px;line-height:1.6;}
+  .card-box .card-ex{margin-top:8px;color:var(--text);font-size:13px;}
+  .norm-step{border:1px solid var(--border);border-radius:8px;margin:12px 0;overflow:hidden;}
+  .norm-step .ns-header{background:var(--surface2);padding:10px 16px;display:flex;align-items:center;gap:12px;}
+  .norm-step .ns-badge{background:var(--accent);color:#fff;font-weight:700;font-size:11px;padding:2px 10px;border-radius:20px;white-space:nowrap;}
+  .norm-step .ns-badge.nf2{background:var(--accent3);}.norm-step .ns-badge.nf3{background:var(--purple);}
+  .norm-step .ns-title{font-weight:700;color:var(--text);font-size:15px;}
+  .norm-step .ns-body{padding:14px 16px;font-size:14px;line-height:1.8;}
+  .norm-step .ns-rule{color:var(--yellow);font-weight:700;margin-bottom:6px;}
+  .bad{color:var(--accent2);}.good{color:var(--accent3);}
+  .anno{font-size:12px;color:var(--muted);margin-left:6px;}
+  .inline-note{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--purple);margin-left:4px;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>ER図 基礎教材</h1>
+  <p>エンティティ・リレーションシップ図の読み方・書き方・設計の考え方</p>
+</header>
+
+<!-- ===== 用語 ===== -->
+<section>
+  <h2 class="gray">はじめに — 基本用語</h2>
+  <div class="term-grid">
+    <div class="term-card"><div class="term">ER図</div><div class="desc">Entity Relationship Diagram。DBのテーブル構造と関係を図で表した設計図。</div></div>
+    <div class="term-card"><div class="term">エンティティ</div><div class="desc">管理したい「もの」や「概念」。テーブルに相当する。例：ユーザー、ロール、権限。</div></div>
+    <div class="term-card"><div class="term">属性</div><div class="desc">エンティティが持つ情報。テーブルのカラムに相当する。例：名前、メールアドレス。</div></div>
+    <div class="term-card"><div class="term">リレーション</div><div class="desc">エンティティ同士の関係。「ユーザーはロールを持つ」のような紐づきを表す線。</div></div>
+    <div class="term-card"><div class="term">カーディナリティ</div><div class="desc">リレーションの「何対何か」を表す。1対1・1対多・多対多の3種類が基本。</div></div>
+    <div class="term-card"><div class="term">主キー（PK）</div><div class="desc">レコードを一意に識別するカラム。重複・NULLは不可。通常はidカラム。</div></div>
+    <div class="term-card"><div class="term">外部キー（FK）</div><div class="desc">他のテーブルの主キーを参照するカラム。テーブル間の紐づけに使う。</div></div>
+    <div class="term-card"><div class="term">中間テーブル</div><div class="desc">多対多の関係を実現するための橋渡しテーブル。2つのFKを持つ。</div></div>
+  </div>
+</section>
+
+<!-- ===== IE記法の記号 ===== -->
+<section>
+  <h2>IE記法（カラス足記法）の読み方</h2>
+  <p>ER図の線の端についている記号で「何対何の関係か」を表す。現場で最もよく使われる記法。</p>
+
+  <div class="er-wrap">
+    <svg viewBox="0 0 780 400" xmlns="http://www.w3.org/2000/svg" width="780" style="max-width:100%">
+
+      <!-- タイトル -->
+      <text x="20" y="22" fill="#64748b" font-size="12" font-weight="700">■ 記号の意味</text>
+
+      <!-- 1（縦線） -->
+      <text x="20" y="55" fill="#e2e8f0" font-size="13" font-weight="700">縦線 = 「1」（必ず1つ）</text>
+      <line x1="20" y1="75" x2="120" y2="75" stroke="#4f9eff" stroke-width="2"/>
+      <line x1="120" y1="65" x2="120" y2="85" stroke="#4f9eff" stroke-width="2.5"/>
+      <text x="125" y="79" fill="#fbbf24" font-size="12">← ここが「1」側</text>
+
+      <!-- 多（カラス足） -->
+      <text x="20" y="115" fill="#e2e8f0" font-size="13" font-weight="700">カラス足 = 「多」（0以上の複数）</text>
+      <line x1="20" y1="135" x2="100" y2="135" stroke="#4ade80" stroke-width="2"/>
+      <line x1="100" y1="135" x2="120" y2="120" stroke="#4ade80" stroke-width="2"/>
+      <line x1="100" y1="135" x2="120" y2="135" stroke="#4ade80" stroke-width="2"/>
+      <line x1="100" y1="135" x2="120" y2="150" stroke="#4ade80" stroke-width="2"/>
+      <text x="125" y="139" fill="#fbbf24" font-size="12">← ここが「多」側（カラスの足に見える）</text>
+
+      <!-- 区切り線 -->
+      <line x1="0" y1="170" x2="780" y2="170" stroke="#252a3d" stroke-width="1"/>
+      <text x="20" y="192" fill="#64748b" font-size="12" font-weight="700">■ 実際の組み合わせ例</text>
+
+      <!-- 1対1 -->
+      <text x="20" y="225" fill="#e2e8f0" font-size="13" font-weight="700">1対1</text>
+      <!-- テーブルA -->
+      <rect x="20" y="232" width="80" height="30" rx="4" fill="#1a1e2e" stroke="#4f9eff" stroke-width="1.5"/>
+      <text x="60" y="252" text-anchor="middle" fill="#4f9eff" font-size="11" font-family="monospace">users</text>
+      <!-- テーブルB -->
+      <rect x="200" y="232" width="100" height="30" rx="4" fill="#1a1e2e" stroke="#4ade80" stroke-width="1.5"/>
+      <text x="250" y="252" text-anchor="middle" fill="#4ade80" font-size="11" font-family="monospace">user_profiles</text>
+      <!-- 線 -->
+      <line x1="100" y1="247" x2="200" y2="247" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="100" y1="237" x2="100" y2="257" stroke="#64748b" stroke-width="2.5"/>
+      <line x1="200" y1="237" x2="200" y2="257" stroke="#64748b" stroke-width="2.5"/>
+      <text x="140" y="240" text-anchor="middle" fill="#fbbf24" font-size="10">1    1</text>
+      <text x="20" y="278" fill="#muted" font-size="12">ユーザー1人につきプロフィールが1つだけ存在する</text>
+      <text x="20" y="293" fill="#64748b" font-size="12">（あまり多くない。1対1ならテーブルをまとめることも検討する）</text>
+
+      <!-- 1対多 -->
+      <text x="390" y="225" fill="#e2e8f0" font-size="13" font-weight="700">1対多（最もよく使う）</text>
+      <rect x="390" y="232" width="60" height="30" rx="4" fill="#1a1e2e" stroke="#4f9eff" stroke-width="1.5"/>
+      <text x="420" y="252" text-anchor="middle" fill="#4f9eff" font-size="11" font-family="monospace">roles</text>
+      <rect x="560" y="232" width="90" height="30" rx="4" fill="#1a1e2e" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="605" y="252" text-anchor="middle" fill="#fb923c" font-size="11" font-family="monospace">user_roles</text>
+      <line x1="450" y1="247" x2="560" y2="247" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="450" y1="237" x2="450" y2="257" stroke="#64748b" stroke-width="2.5"/>
+      <!-- カラス足 -->
+      <line x1="540" y1="247" x2="560" y2="232" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="540" y1="247" x2="560" y2="247" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="540" y1="247" x2="560" y2="262" stroke="#64748b" stroke-width="1.5"/>
+      <text x="490" y="240" text-anchor="middle" fill="#fbbf24" font-size="10">1    多</text>
+      <text x="390" y="278" fill="#e2e8f0" font-size="12">1つのロールを複数ユーザーに割り当て可能</text>
+      <text x="390" y="295" fill="#64748b" font-size="12">（roles の1行 に対して user_roles が複数行存在する）</text>
+
+      <!-- 多対多の説明 -->
+      <line x1="0" y1="320" x2="780" y2="320" stroke="#252a3d" stroke-width="1"/>
+      <text x="20" y="342" fill="#e2e8f0" font-size="13" font-weight="700">多対多 = 中間テーブルで「1対多」×2に分解する</text>
+      <!-- users -->
+      <rect x="20" y="355" width="60" height="28" rx="4" fill="#1a1e2e" stroke="#4f9eff" stroke-width="1.5"/>
+      <text x="50" y="374" text-anchor="middle" fill="#4f9eff" font-size="11" font-family="monospace">users</text>
+      <!-- user_roles -->
+      <rect x="160" y="355" width="90" height="28" rx="4" fill="#1a1e2e" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="205" y="374" text-anchor="middle" fill="#fb923c" font-size="11" font-family="monospace">user_roles</text>
+      <!-- roles -->
+      <rect x="340" y="355" width="60" height="28" rx="4" fill="#1a1e2e" stroke="#4ade80" stroke-width="1.5"/>
+      <text x="370" y="374" text-anchor="middle" fill="#4ade80" font-size="11" font-family="monospace">roles</text>
+      <!-- 線1 -->
+      <line x1="80" y1="369" x2="160" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="80" y1="359" x2="80" y2="379" stroke="#64748b" stroke-width="2.5"/>
+      <line x1="140" y1="369" x2="160" y2="354" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="140" y1="369" x2="160" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="140" y1="369" x2="160" y2="384" stroke="#64748b" stroke-width="1.5"/>
+      <text x="110" y="362" text-anchor="middle" fill="#fbbf24" font-size="10">1   多</text>
+      <!-- 線2 -->
+      <line x1="250" y1="369" x2="340" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="340" y1="359" x2="340" y2="379" stroke="#64748b" stroke-width="2.5"/>
+      <line x1="250" y1="354" x2="270" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="250" y1="369" x2="270" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="250" y1="384" x2="270" y2="369" stroke="#64748b" stroke-width="1.5"/>
+      <text x="295" y="362" text-anchor="middle" fill="#fbbf24" font-size="10">多   1</text>
+
+      <text x="430" y="370" fill="#64748b" font-size="12">← 中間テーブルを挟むことで</text>
+      <text x="430" y="386" fill="#64748b" font-size="12">　 1対多×2に分解できる</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ===== サンプル構成 ===== -->
+<section>
+  <h2>今回使うサンプル構成</h2>
+  <p>ユーザーにロールを割り当てて権限を管理するシステムを例に使う。</p>
+  <table>
+    <tr><th>テーブル名</th><th>役割</th><th>例</th></tr>
+    <tr><td><span class="tbl">users</span></td><td>ユーザー情報</td><td>山田太郎、田中花子</td></tr>
+    <tr><td><span class="tbl">roles</span></td><td>ロール（役割）の定義</td><td>管理者、一般ユーザー、閲覧専用</td></tr>
+    <tr><td><span class="tbl">user_roles</span></td><td>ユーザーとロールの中間テーブル</td><td>山田は管理者、田中は一般ユーザー</td></tr>
+    <tr><td><span class="tbl">permissions</span></td><td>権限の定義</td><td>記事作成、ユーザー削除、閲覧のみ</td></tr>
+    <tr><td><span class="tbl">role_permissions</span></td><td>ロールと権限の中間テーブル</td><td>管理者は全権限、閲覧専用は閲覧のみ</td></tr>
+  </table>
+</section>
+
+<!-- ===== ER図全体像 ===== -->
+<section>
+  <h2>ER図（全体像）</h2>
+  <div class="er-wrap">
+    <svg viewBox="0 0 820 560" xmlns="http://www.w3.org/2000/svg" width="820" style="max-width:100%">
+      <defs>
+        <!-- カラス足: 右端（線が左から右に来るとき） orient固定で回転しない -->
+        <marker id="crow-r" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="0">
+          <line x1="3" y1="1" x2="12" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="3" y1="13" x2="12" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="3" y1="7"  x2="12" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+        </marker>
+        <!-- 縦線（1側）: 右端 -->
+        <marker id="one-r" markerWidth="8" markerHeight="14" refX="6" refY="7" orient="0">
+          <line x1="6" y1="1" x2="6" y2="13" stroke="#64748b" stroke-width="2.2"/>
+        </marker>
+        <!-- カラス足: 左端（線が右から左に来るとき） -->
+        <marker id="crow-l" markerWidth="14" markerHeight="14" refX="2" refY="7" orient="0">
+          <line x1="11" y1="1" x2="2" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="11" y1="13" x2="2" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="11" y1="7"  x2="2" y2="7" stroke="#64748b" stroke-width="1.8" fill="none"/>
+        </marker>
+        <!-- 縦線（1側）: 左端 -->
+        <marker id="one-l" markerWidth="8" markerHeight="14" refX="2" refY="7" orient="0">
+          <line x1="2" y1="1" x2="2" y2="13" stroke="#64748b" stroke-width="2.2"/>
+        </marker>
+        <!-- カラス足: 下端（線が上から下に来るとき） -->
+        <marker id="crow-d" markerWidth="14" markerHeight="14" refX="7" refY="12" orient="90">
+          <line x1="1"  y1="3" x2="7" y2="12" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="13" y1="3" x2="7" y2="12" stroke="#64748b" stroke-width="1.8" fill="none"/>
+          <line x1="7"  y1="3" x2="7" y2="12" stroke="#64748b" stroke-width="1.8" fill="none"/>
+        </marker>
+        <!-- 縦線（1側）: 上端 -->
+        <marker id="one-t" markerWidth="14" markerHeight="8" refX="7" refY="2" orient="90">
+          <line x1="1" y1="2" x2="13" y2="2" stroke="#64748b" stroke-width="2.2"/>
+        </marker>
+      </defs>
+
+      <!-- users -->
+      <rect x="20" y="190" width="185" height="150" rx="6" fill="#1a1e2e" stroke="#4f9eff" stroke-width="2"/>
+      <rect x="20" y="190" width="185" height="34" rx="6" fill="#4f9eff" fill-opacity="0.2"/>
+      <rect x="20" y="216" width="185" height="8" fill="#4f9eff" fill-opacity="0.2"/>
+      <text x="112" y="212" text-anchor="middle" fill="#4f9eff" font-size="13" font-weight="700" font-family="monospace">users</text>
+      <text x="36" y="240" fill="#fbbf24" font-size="12" font-family="monospace">PK  id</text>
+      <text x="36" y="258" fill="#e2e8f0" font-size="12" font-family="monospace">    name</text>
+      <text x="36" y="276" fill="#e2e8f0" font-size="12" font-family="monospace">    email</text>
+      <text x="36" y="294" fill="#e2e8f0" font-size="12" font-family="monospace">    password_hash</text>
+      <text x="36" y="312" fill="#e2e8f0" font-size="12" font-family="monospace">    created_at</text>
+
+      <!-- user_roles (中間) -->
+      <rect x="300" y="170" width="185" height="110" rx="6" fill="#1a1e2e" stroke="#fb923c" stroke-width="2" stroke-dasharray="6,3"/>
+      <rect x="300" y="170" width="185" height="34" rx="6" fill="#fb923c" fill-opacity="0.2"/>
+      <rect x="300" y="196" width="185" height="8" fill="#fb923c" fill-opacity="0.2"/>
+      <text x="392" y="192" text-anchor="middle" fill="#fb923c" font-size="13" font-weight="700" font-family="monospace">user_roles</text>
+      <text x="316" y="218" fill="#fbbf24" font-size="12" font-family="monospace">PK  id</text>
+      <text x="316" y="236" fill="#4f9eff" font-size="12" font-family="monospace">FK  user_id</text>
+      <text x="316" y="254" fill="#4f9eff" font-size="12" font-family="monospace">FK  role_id</text>
+      <text x="316" y="272" fill="#e2e8f0" font-size="12" font-family="monospace">    assigned_at</text>
+
+      <!-- roles -->
+      <rect x="580" y="150" width="200" height="130" rx="6" fill="#1a1e2e" stroke="#4ade80" stroke-width="2"/>
+      <rect x="580" y="150" width="200" height="34" rx="6" fill="#4ade80" fill-opacity="0.2"/>
+      <rect x="580" y="176" width="200" height="8" fill="#4ade80" fill-opacity="0.2"/>
+      <text x="680" y="172" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700" font-family="monospace">roles</text>
+      <text x="596" y="200" fill="#fbbf24" font-size="12" font-family="monospace">PK  id</text>
+      <text x="596" y="218" fill="#4ade80" font-size="12" font-family="monospace">UQ  name</text>
+      <text x="596" y="236" fill="#e2e8f0" font-size="12" font-family="monospace">    description</text>
+      <text x="596" y="254" fill="#e2e8f0" font-size="12" font-family="monospace">    created_at</text>
+
+      <!-- role_permissions (中間) -->
+      <rect x="580" y="360" width="200" height="110" rx="6" fill="#1a1e2e" stroke="#fb923c" stroke-width="2" stroke-dasharray="6,3"/>
+      <rect x="580" y="360" width="200" height="34" rx="6" fill="#fb923c" fill-opacity="0.2"/>
+      <rect x="580" y="386" width="200" height="8" fill="#fb923c" fill-opacity="0.2"/>
+      <text x="680" y="382" text-anchor="middle" fill="#fb923c" font-size="13" font-weight="700" font-family="monospace">role_permissions</text>
+      <text x="596" y="408" fill="#fbbf24" font-size="12" font-family="monospace">PK  id</text>
+      <text x="596" y="426" fill="#4f9eff" font-size="12" font-family="monospace">FK  role_id</text>
+      <text x="596" y="444" fill="#4f9eff" font-size="12" font-family="monospace">FK  permission_id</text>
+
+      <!-- permissions -->
+      <rect x="300" y="370" width="185" height="130" rx="6" fill="#1a1e2e" stroke="#a78bfa" stroke-width="2"/>
+      <rect x="300" y="370" width="185" height="34" rx="6" fill="#a78bfa" fill-opacity="0.2"/>
+      <rect x="300" y="396" width="185" height="8" fill="#a78bfa" fill-opacity="0.2"/>
+      <text x="392" y="392" text-anchor="middle" fill="#a78bfa" font-size="13" font-weight="700" font-family="monospace">permissions</text>
+      <text x="316" y="416" fill="#fbbf24" font-size="12" font-family="monospace">PK  id</text>
+      <text x="316" y="434" fill="#a78bfa" font-size="12" font-family="monospace">UQ  name</text>
+      <text x="316" y="452" fill="#e2e8f0" font-size="12" font-family="monospace">    description</text>
+      <text x="316" y="470" fill="#e2e8f0" font-size="12" font-family="monospace">    created_at</text>
+
+      <!-- リレーション: users(1) → user_roles(多) 水平線で接続 -->
+      <polyline points="205,250 252,250 252,225 300,225" stroke="#64748b" stroke-width="1.5" fill="none"
+            marker-start="url(#one-r)" marker-end="url(#crow-l)"/>
+      <text x="218" y="244" fill="#4f9eff" font-size="11" font-weight="700">1</text>
+      <text x="278" y="218" fill="#fb923c" font-size="11" font-weight="700">多</text>
+
+      <!-- リレーション: roles(1) → user_roles(多) 水平線 -->
+      <line x1="580" y1="225" x2="485" y2="225" stroke="#64748b" stroke-width="1.5"
+            marker-start="url(#one-l)" marker-end="url(#crow-r)"/>
+      <text x="554" y="218" fill="#4ade80" font-size="11" font-weight="700">1</text>
+      <text x="488" y="218" fill="#fb923c" font-size="11" font-weight="700">多</text>
+
+      <!-- リレーション: roles(1) → role_permissions(多) 垂直線 -->
+      <line x1="680" y1="280" x2="680" y2="360" stroke="#64748b" stroke-width="1.5"
+            marker-start="url(#one-t)" marker-end="url(#crow-d)"/>
+      <text x="688" y="310" fill="#4ade80" font-size="11" font-weight="700">1</text>
+      <text x="688" y="352" fill="#fb923c" font-size="11" font-weight="700">多</text>
+
+      <!-- リレーション: permissions(1) → role_permissions(多) 折れ線 -->
+      <polyline points="485,420 532,420 532,395 580,395" stroke="#64748b" stroke-width="1.5" fill="none"
+            marker-start="url(#one-r)" marker-end="url(#crow-l)"/>
+      <text x="498" y="413" fill="#a78bfa" font-size="11" font-weight="700">1</text>
+      <text x="558" y="388" fill="#fb923c" font-size="11" font-weight="700">多</text>
+
+      <!-- 凡例（下部に独立して配置） -->
+      <rect x="20" y="480" width="260" height="65" rx="6" fill="#141720" stroke="#252a3d" stroke-width="1"/>
+      <text x="36" y="500" fill="#64748b" font-size="11" font-weight="700">凡例（IE記法）</text>
+      <!-- 1対多の線サンプル -->
+      <line x1="36" y1="516" x2="80" y2="516" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="36" y1="509" x2="36" y2="523" stroke="#64748b" stroke-width="2"/>
+      <line x1="64" y1="516" x2="80" y2="506" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="64" y1="516" x2="80" y2="516" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="64" y1="516" x2="80" y2="526" stroke="#64748b" stroke-width="1.5"/>
+      <text x="85" y="520" fill="#e2e8f0" font-size="11">縦線=1　カラス足=多</text>
+      <!-- 中間テーブル -->
+      <rect x="36" y="530" width="36" height="10" rx="2" fill="none" stroke="#fb923c" stroke-width="1.2" stroke-dasharray="3,2"/>
+      <text x="78" y="540" fill="#e2e8f0" font-size="11">破線枠 = 中間テーブル</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ===== カーディナリティ ===== -->
+<section>
+  <h2 class="green">カーディナリティ — 何対何の関係か</h2>
+  <div class="card-grid">
+    <div class="card-box">
+      <div class="card-title">1対1（one-to-one）</div>
+      <div class="card-desc">片方の1レコードが、もう片方の1レコードとだけ対応する。</div>
+      <div class="card-ex">例：users ↔ user_profiles<br>ユーザー1人につきプロフィールが1つ</div>
+    </div>
+    <div class="card-box">
+      <div class="card-title">1対多（one-to-many）</div>
+      <div class="card-desc">片方の1レコードが、もう片方の複数レコードと対応する。最もよく使う。</div>
+      <div class="card-ex">例：roles → user_roles<br>1つのロールを複数ユーザーが持てる</div>
+    </div>
+    <div class="card-box">
+      <div class="card-title">多対多（many-to-many）</div>
+      <div class="card-desc">両方のテーブルが互いに複数対応する。中間テーブルで実現する。</div>
+      <div class="card-ex">例：users ↔ roles<br>ユーザーは複数ロールを持てる<br>ロールも複数ユーザーに割り当て可能</div>
+    </div>
+    <div class="card-box">
+      <div class="card-title">多対多を中間テーブルで分解する理由</div>
+      <div class="card-desc">RDBでは1セルに複数値を入れられない。中間テーブルで「1対多×2」に分解することで実現する。</div>
+      <div class="card-ex">users(1) → user_roles(多) ← roles(1)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== テーブル定義 ===== -->
+<section>
+  <h2>テーブル定義詳細</h2>
+
+  <div class="table-def">
+    <div class="tbl-header">users — ユーザー情報</div>
+    <table>
+      <tr><th>カラム名</th><th>型</th><th>制約</th><th>説明</th></tr>
+      <tr><td><span class="pk">id</span></td><td>INT</td><td>PK, AUTO_INCREMENT</td><td>主キー。自動採番</td></tr>
+      <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>ユーザー名</td></tr>
+      <tr><td>email</td><td>VARCHAR(255)</td><td>NOT NULL, UNIQUE</td><td>メールアドレス。重複不可</td></tr>
+      <tr><td>password_hash</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>ハッシュ化されたパスワード</td></tr>
+      <tr><td>created_at</td><td>DATETIME</td><td>DEFAULT NOW()</td><td>作成日時</td></tr>
+    </table>
+  </div>
+
+  <div class="table-def">
+    <div class="tbl-header">roles — ロール定義</div>
+    <table>
+      <tr><th>カラム名</th><th>型</th><th>制約</th><th>説明</th></tr>
+      <tr><td><span class="pk">id</span></td><td>INT</td><td>PK, AUTO_INCREMENT</td><td>主キー</td></tr>
+      <tr><td><span class="uq">name</span></td><td>VARCHAR(50)</td><td>NOT NULL, UNIQUE</td><td>ロール名。例: admin, user, viewer</td></tr>
+      <tr><td>description</td><td>TEXT</td><td>NULL可</td><td>ロールの説明</td></tr>
+      <tr><td>created_at</td><td>DATETIME</td><td>DEFAULT NOW()</td><td>作成日時</td></tr>
+    </table>
+  </div>
+
+  <div class="table-def">
+    <div class="tbl-header">user_roles — ユーザーとロールの中間テーブル（多対多）</div>
+    <table>
+      <tr><th>カラム名</th><th>型</th><th>制約</th><th>説明</th></tr>
+      <tr><td><span class="pk">id</span></td><td>INT</td><td>PK, AUTO_INCREMENT</td><td>主キー</td></tr>
+      <tr><td><span class="fk">user_id</span></td><td>INT</td><td>NOT NULL, FK → users.id</td><td>どのユーザーか</td></tr>
+      <tr><td><span class="fk">role_id</span></td><td>INT</td><td>NOT NULL, FK → roles.id</td><td>どのロールか</td></tr>
+      <tr><td>assigned_at</td><td>DATETIME</td><td>DEFAULT NOW()</td><td>割り当て日時</td></tr>
+    </table>
+  </div>
+
+  <div class="table-def">
+    <div class="tbl-header">permissions — 権限定義</div>
+    <table>
+      <tr><th>カラム名</th><th>型</th><th>制約</th><th>説明</th></tr>
+      <tr><td><span class="pk">id</span></td><td>INT</td><td>PK, AUTO_INCREMENT</td><td>主キー</td></tr>
+      <tr><td><span class="uq">name</span></td><td>VARCHAR(100)</td><td>NOT NULL, UNIQUE</td><td>権限名。例: post:create, user:delete</td></tr>
+      <tr><td>description</td><td>TEXT</td><td>NULL可</td><td>権限の説明</td></tr>
+      <tr><td>created_at</td><td>DATETIME</td><td>DEFAULT NOW()</td><td>作成日時</td></tr>
+    </table>
+  </div>
+
+  <div class="table-def">
+    <div class="tbl-header">role_permissions — ロールと権限の中間テーブル（多対多）</div>
+    <table>
+      <tr><th>カラム名</th><th>型</th><th>制約</th><th>説明</th></tr>
+      <tr><td><span class="pk">id</span></td><td>INT</td><td>PK, AUTO_INCREMENT</td><td>主キー</td></tr>
+      <tr><td><span class="fk">role_id</span></td><td>INT</td><td>NOT NULL, FK → roles.id</td><td>どのロールか</td></tr>
+      <tr><td><span class="fk">permission_id</span></td><td>INT</td><td>NOT NULL, FK → permissions.id</td><td>どの権限か</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 論理削除（基礎） ===== -->
+<section>
+  <h2>論理削除（soft delete）</h2>
+  <p>物理削除（DELETE文で完全に消す）ではなく、「削除済みフラグ」や「削除日時」カラムを使って削除を表現する手法。</p>
+
+  <table>
+    <tr><th></th><th>物理削除</th><th>論理削除</th></tr>
+    <tr><td>やること</td><td>DELETE文でレコードを消す</td><td>deleted_at に日時をセットする</td></tr>
+    <tr><td>データ</td><td>完全になくなる</td><td>DBには残る</td></tr>
+    <tr><td>復元</td><td>できない</td><td>deleted_at を NULL に戻せばよい</td></tr>
+    <tr><td>デメリット</td><td>やり直しがきかない</td><td>全クエリに WHERE deleted_at IS NULL が必要</td></tr>
+  </table>
+
+  <pre><span class="cmt">-- 論理削除テーブルの例（deleted_atカラムを追加）</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">users</span> (
+    id         <span class="kw">INT      PRIMARY KEY AUTO_INCREMENT</span>,
+    name       <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+    email      <span class="kw">VARCHAR</span>(<span class="num">255</span>) <span class="kw">NOT NULL UNIQUE</span>,
+    created_at <span class="kw">DATETIME DEFAULT NOW()</span>,
+    deleted_at <span class="kw">DATETIME DEFAULT NULL</span>  <span class="cmt">-- NULLなら有効、日時が入ってれば削除済み</span>
+);
+
+<span class="cmt">-- 論理削除の実行</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span>   deleted_at = <span class="kw">NOW()</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+<span class="cmt">-- 有効なユーザーだけ取得する（全クエリにこれが必要）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;</pre>
+
+  <div class="warn"><strong>⚠ 安易に全テーブルに入れない</strong>
+論理削除は便利だが、全クエリに WHERE deleted_at IS NULL を追加し忘れると削除済みデータが混入するバグになる。採用するかどうかは要件次第で判断する。</div>
+</section>
+
+<!-- ===== CREATE TABLE ===== -->
+<section>
+  <h2 class="red">CREATE TABLE — 実際のSQL</h2>
+  <p>外部キーが参照する親テーブルを先に作る必要がある。中間テーブルは最後。</p>
+
+  <pre><span class="cmt">-- 1. 親テーブルから作る</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">roles</span> (
+    id          <span class="kw">INT          PRIMARY KEY AUTO_INCREMENT</span>,
+    name        <span class="kw">VARCHAR</span>(<span class="num">50</span>)  <span class="kw">NOT NULL UNIQUE</span>,
+    description <span class="kw">TEXT</span>,
+    created_at  <span class="kw">DATETIME     DEFAULT NOW()</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tbl">permissions</span> (
+    id          <span class="kw">INT          PRIMARY KEY AUTO_INCREMENT</span>,
+    name        <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL UNIQUE</span>,
+    description <span class="kw">TEXT</span>,
+    created_at  <span class="kw">DATETIME     DEFAULT NOW()</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tbl">users</span> (
+    id            <span class="kw">INT          PRIMARY KEY AUTO_INCREMENT</span>,
+    name          <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+    email         <span class="kw">VARCHAR</span>(<span class="num">255</span>) <span class="kw">NOT NULL UNIQUE</span>,
+    password_hash <span class="kw">VARCHAR</span>(<span class="num">255</span>) <span class="kw">NOT NULL</span>,
+    created_at    <span class="kw">DATETIME     DEFAULT NOW()</span>
+);
+
+<span class="cmt">-- 2. 中間テーブルは最後（両方の親が必要なので）</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">user_roles</span> (
+    id          <span class="kw">INT      PRIMARY KEY AUTO_INCREMENT</span>,
+    user_id     <span class="kw">INT      NOT NULL</span>,
+    role_id     <span class="kw">INT      NOT NULL</span>,
+    assigned_at <span class="kw">DATETIME DEFAULT NOW()</span>,
+    <span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id) <span class="kw">ON DELETE CASCADE</span>,
+    <span class="kw">FOREIGN KEY</span> (role_id) <span class="kw">REFERENCES</span> <span class="tbl">roles</span>(id) <span class="kw">ON DELETE CASCADE</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tbl">role_permissions</span> (
+    id            <span class="kw">INT  PRIMARY KEY AUTO_INCREMENT</span>,
+    role_id       <span class="kw">INT  NOT NULL</span>,
+    permission_id <span class="kw">INT  NOT NULL</span>,
+    <span class="kw">FOREIGN KEY</span> (role_id)       <span class="kw">REFERENCES</span> <span class="tbl">roles</span>(id)       <span class="kw">ON DELETE CASCADE</span>,
+    <span class="kw">FOREIGN KEY</span> (permission_id) <span class="kw">REFERENCES</span> <span class="tbl">permissions</span>(id) <span class="kw">ON DELETE CASCADE</span>
+);</pre>
+</section>
+
+<!-- ===== 実用SQL ===== -->
+<section>
+  <h2>このER図を使ったSQLの例</h2>
+  <pre><span class="cmt">-- ユーザーID=1 が持つ権限を全部取得</span>
+<span class="kw">SELECT</span>
+    u.name           <span class="kw">AS</span> user_name,
+    r.name           <span class="kw">AS</span> role_name,
+    p.name           <span class="kw">AS</span> permission_name
+<span class="kw">FROM</span>            <span class="tbl">users</span>            u
+<span class="kw">INNER JOIN</span>      <span class="tbl">user_roles</span>       ur <span class="kw">ON</span> u.id  = ur.user_id
+<span class="kw">INNER JOIN</span>      <span class="tbl">roles</span>            r  <span class="kw">ON</span> ur.role_id = r.id
+<span class="kw">INNER JOIN</span>      <span class="tbl">role_permissions</span> rp <span class="kw">ON</span> r.id  = rp.role_id
+<span class="kw">INNER JOIN</span>      <span class="tbl">permissions</span>      p  <span class="kw">ON</span> rp.permission_id = p.id
+<span class="kw">WHERE</span> u.id = <span class="num">1</span>
+<span class="kw">ORDER BY</span> r.name, p.name;
+
+<span class="cmt">-- 「user:delete」権限を持つユーザーだけ取得</span>
+<span class="cmt">-- ※ permission.name を文字列で判定するのは現場でも一般的</span>
+<span class="cmt">--   idで判定するとコードを読んだときに何の権限か分からなくなりやすい</span>
+<span class="kw">SELECT DISTINCT</span>
+    u.id,
+    u.name,
+    u.email
+<span class="kw">FROM</span>       <span class="tbl">users</span>            u
+<span class="kw">INNER JOIN</span> <span class="tbl">user_roles</span>       ur <span class="kw">ON</span> u.id         = ur.user_id
+<span class="kw">INNER JOIN</span> <span class="tbl">roles</span>            r  <span class="kw">ON</span> ur.role_id   = r.id
+<span class="kw">INNER JOIN</span> <span class="tbl">role_permissions</span> rp <span class="kw">ON</span> r.id         = rp.role_id
+<span class="kw">INNER JOIN</span> <span class="tbl">permissions</span>      p  <span class="kw">ON</span> rp.permission_id = p.id
+<span class="kw">WHERE</span> p.name = <span class="str">'user:delete'</span>;</pre>
+</section>
+
+<!-- ===== 正規化 ===== -->
+<section>
+  <h2 class="purple">正規化 — データの冗長性を排除する設計原則</h2>
+  <p>同じ情報を複数箇所に持つと、更新漏れや矛盾が起きやすくなる。正規化はそれを防ぐための設計ルール。</p>
+
+  <h3>正規化の前に知っておく概念：「依存」とは</h3>
+  <p>正規化を理解する上で「〇〇は△△によって決まる」という関係を「△△に依存する」と表現する。</p>
+  <table>
+    <tr><th>例</th><th>依存の関係</th></tr>
+    <tr><td>社員番号がわかれば社員名が決まる</td><td>社員名は社員番号に依存する</td></tr>
+    <tr><td>商品IDがわかれば商品名が決まる</td><td>商品名は商品IDに依存する</td></tr>
+    <tr><td>部署IDがわかれば部署名が決まる</td><td>部署名は部署IDに依存する</td></tr>
+  </table>
+  <p>正規化は「どのカラムが何に依存しているか」を整理してテーブルを分割していく作業。</p>
+
+  <h3>第1〜第3正規形の違い（全体像）</h3>
+  <table>
+    <tr><th>正規形</th><th>一言で言うと</th><th>解決する問題</th></tr>
+    <tr><td>第1正規形（1NF）</td><td>1セルに1値だけ</td><td>セルに複数値や繰り返しグループが入っている</td></tr>
+    <tr><td>第2正規形（2NF）</td><td>主キー全体に依存させる</td><td>複合主キーの「一部」だけに依存するカラムがある</td></tr>
+    <tr><td>第3正規形（3NF）</td><td>主キー以外への依存を排除する</td><td>主キーではなく「別の普通のカラム」に依存するカラムがある</td></tr>
+  </table>
+  <p>第2と第3の違いは<strong>「どこへの依存が問題か」</strong>の違い。第2は「主キーの一部への依存」が問題、第3は「主キー以外の普通のカラムへの依存」が問題。</p>
+
+  <div class="norm-step">
+    <div class="ns-header">
+      <span class="ns-badge">第1正規形（1NF）</span>
+      <span class="ns-title">1つのセルに1つの値だけ入れる</span>
+    </div>
+    <div class="ns-body">
+      <div class="ns-rule">ルール: 1つのセルに複数の値を詰め込まない・同じ種類のカラムを横に並べない</div>
+      <p>違反パターンは2種類ある。</p>
+
+      <p class="bad" style="margin-top:12px">✗ NG パターン1 — 1つのセルに複数値を詰め込む</p>
+      <table style="margin:8px 0 4px">
+        <tr><th>user_id（PK）</th><th>name</th><th style="color:var(--accent2)">role_ids ← 問題</th></tr>
+        <tr><td>1</td><td>山田</td><td style="color:var(--accent2)">1,2,3</td></tr>
+        <tr><td>2</td><td>田中</td><td style="color:var(--accent2)">2</td></tr>
+      </table>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">「role_id=2 のユーザーを全員取得」するSQLが書けない。更新・削除も困難。</p>
+
+      <p class="bad">✗ NG パターン2 — 繰り返しグループ（同じ種類のカラムを横に並べる）</p>
+      <table style="margin:8px 0 4px">
+        <tr><th>user_id（PK）</th><th>name</th><th style="color:var(--accent2)">role_id_1</th><th style="color:var(--accent2)">role_id_2</th><th style="color:var(--accent2)">role_id_3</th></tr>
+        <tr><td>1</td><td>山田</td><td style="color:var(--accent2)">1</td><td style="color:var(--accent2)">2</td><td style="color:var(--accent2)">3</td></tr>
+        <tr><td>2</td><td>田中</td><td style="color:var(--accent2)">2</td><td style="color:var(--accent2)">NULL</td><td style="color:var(--accent2)">NULL</td></tr>
+      </table>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">4つ目のロールが必要になったとき、カラムを追加しないといけない。NULLだらけになる。これが「繰り返しグループ」。</p>
+
+      <p class="good">✓ OK — 中間テーブルで1行1値に分解する</p>
+      <table style="margin:8px 0 4px">
+        <tr><th>id（PK）</th><th>user_id（FK）</th><th>role_id（FK）</th></tr>
+        <tr><td>1</td><td>1</td><td>1</td></tr>
+        <tr><td>2</td><td>1</td><td>2</td></tr>
+        <tr><td>3</td><td>1</td><td>3</td></tr>
+        <tr><td>4</td><td>2</td><td>2</td></tr>
+      </table>
+      <p style="font-size:13px;color:var(--muted)">1行に1つの紐づきだけを持つ。ロールがいくつ増えても行を追加するだけでよい。</p>
+    </div>
+  </div>
+
+  <div class="norm-step">
+    <div class="ns-header">
+      <span class="ns-badge nf2">第2正規形（2NF）</span>
+      <span class="ns-title">主キーの「一部」だけに依存するカラムを追い出す</span>
+    </div>
+    <div class="ns-body">
+      <div class="ns-rule">問題: 複合主キー（2つ以上のカラムで1行を識別するとき）の一部だけで値が決まるカラムがある</div>
+      <p style="margin-bottom:8px">第2正規形が問題になるのは<strong>複合主キーがある場合だけ</strong>。主キーが1カラムなら第2正規形違反は起きない。</p>
+      <p>具体例で説明する。受注明細テーブルは「どの注文のどの商品か」を特定するために order_id と product_id の2つで主キーを構成する（複合主キー）。</p>
+
+      <p class="bad" style="margin-top:12px">✗ NG — 受注明細テーブルに商品名を持たせている</p>
+      <table style="margin:8px 0 4px">
+        <tr><th>order_id（PK）</th><th>product_id（PK）</th><th>quantity</th><th style="color:var(--accent2)">product_name ← 問題</th></tr>
+        <tr><td>1</td><td>101</td><td>3</td><td style="color:var(--accent2)">ノートPC</td></tr>
+        <tr><td>1</td><td>102</td><td>1</td><td style="color:var(--accent2)">マウス</td></tr>
+        <tr><td>2</td><td>101</td><td>2</td><td style="color:var(--accent2)">ノートPC</td></tr>
+      </table>
+      <p style="margin-bottom:8px">product_name は <strong>product_id だけで決まる</strong>（「101番の商品名はノートPC」はどの注文でも同じ）。order_id は関係ない。<br>
+      つまり主キーが order_id + product_id の2つなのに、product_name は product_id 1つだけに依存している。これが「主キーの一部への依存（部分関数従属）」。</p>
+      <p style="color:var(--accent2);font-size:13px;margin-bottom:12px">何が困るか：「ノートPC」→「ノートパソコン」に名前が変わったとき、この商品が含まれる全注文行を更新しないといけない。更新漏れが起きると同じ商品なのに「ノートPC」と「ノートパソコン」が混在する。</p>
+
+      <p class="good" style="margin-top:12px">✓ OK — product_name を products テーブルに切り出す</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0">
+        <div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:4px">order_details（受注明細）</p>
+          <table>
+            <tr><th>order_id（PK）</th><th>product_id（PK）</th><th>quantity</th></tr>
+            <tr><td>1</td><td>101</td><td>3</td></tr>
+            <tr><td>1</td><td>102</td><td>1</td></tr>
+            <tr><td>2</td><td>101</td><td>2</td></tr>
+          </table>
+        </div>
+        <div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:4px">products（商品）</p>
+          <table>
+            <tr><th>id（PK）</th><th>name</th></tr>
+            <tr><td>101</td><td>ノートPC</td></tr>
+            <tr><td>102</td><td>マウス</td></tr>
+          </table>
+        </div>
+      </div>
+      <p>product_id に依存するカラム（商品名）は products テーブルにまとめる。名前変更は products の1行を更新するだけで済む。</p>
+    </div>
+  </div>
+
+  <div class="norm-step">
+    <div class="ns-header">
+      <span class="ns-badge nf3">第3正規形（3NF）</span>
+      <span class="ns-title">普通のカラムが別の普通のカラムに依存していたら追い出す</span>
+    </div>
+    <div class="ns-body">
+      <div class="ns-rule">問題: 主キーではない普通のカラムが、さらに別の普通のカラムに依存している</div>
+      <p style="margin-bottom:8px">第2正規形は「主キーの一部への依存」が問題だったが、第3正規形は<strong>「主キーと全く関係ない普通のカラムへの依存」</strong>が問題。</p>
+      <p>具体例で説明する。usersテーブルに部署名を直接持たせたケース。</p>
+
+      <p class="bad" style="margin-top:12px">✗ NG — users に department_name を直接持たせている</p>
+      <table style="margin:8px 0 4px">
+        <tr><th>id（PK）</th><th>name</th><th>department_id</th><th style="color:var(--accent2)">department_name ← 問題</th></tr>
+        <tr><td>1</td><td>山田</td><td>10</td><td style="color:var(--accent2)">開発部</td></tr>
+        <tr><td>2</td><td>田中</td><td>10</td><td style="color:var(--accent2)">開発部</td></tr>
+        <tr><td>3</td><td>鈴木</td><td>20</td><td style="color:var(--accent2)">営業部</td></tr>
+      </table>
+      <p style="margin-bottom:8px">department_name は <strong>department_id によって決まる</strong>（「10番の部署は開発部」はどのユーザーでも同じ）。主キーである id は関係ない。<br>
+      つまり主キー（id）ではなく、普通のカラムである department_id に依存している。これが「主キー以外への依存（推移的関数従属）」。</p>
+      <p style="color:var(--accent2);font-size:13px;margin-bottom:12px">何が困るか：「開発部」→「開発グループ」に名称変更するとき、開発部に所属する全ユーザー行を更新しないといけない。更新漏れが起きると「開発部」と「開発グループ」が混在する矛盾が発生する。</p>
+
+      <p style="margin-bottom:8px;font-weight:700">第2正規形との違いを整理する</p>
+      <table style="margin-bottom:12px">
+        <tr><th></th><th>第2正規形違反</th><th>第3正規形違反</th></tr>
+        <tr><td>問題のカラム</td><td>product_name</td><td>department_name</td></tr>
+        <tr><td>何に依存しているか</td><td>複合主キーの一部（product_id）</td><td>主キーでない普通のカラム（department_id）</td></tr>
+        <tr><td>主キーが複合かどうか</td><td>複合主キーが前提</td><td>主キーが1つでも起きる</td></tr>
+        <tr><td>解決策</td><td>依存先を主キーにしたテーブルに切り出す</td><td>依存先を主キーにしたテーブルに切り出す</td></tr>
+      </table>
+
+      <p class="good">✓ OK — department_name を departments テーブルに切り出す</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0">
+        <div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:4px">users</p>
+          <table>
+            <tr><th>id（PK）</th><th>name</th><th>department_id（FK）</th></tr>
+            <tr><td>1</td><td>山田</td><td>10</td></tr>
+            <tr><td>2</td><td>田中</td><td>10</td></tr>
+            <tr><td>3</td><td>鈴木</td><td>20</td></tr>
+          </table>
+        </div>
+        <div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:4px">departments</p>
+          <table>
+            <tr><th>id（PK）</th><th>name</th></tr>
+            <tr><td>10</td><td>開発部</td></tr>
+            <tr><td>20</td><td>営業部</td></tr>
+          </table>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">名称変更は departments の1行を更新するだけで済む。usersは department_id（FK）で参照するだけ。</p>
+    </div>
+  </div>
+
+  <div class="tip">実務では「第3正規形まで正規化してから、パフォーマンス上の理由で意図的に非正規化する」という流れが基本。最初から非正規化するのは設計ミスの温床になる。</div>
+
+  <div class="norm-step" style="border-color:var(--purple)">
+    <div class="ns-header" style="background:rgba(167,139,250,0.1)">
+      <span class="ns-badge nf3">補足</span>
+      <span class="ns-title">第3正規形違反はどういうときに起きるか</span>
+    </div>
+    <div class="ns-body">
+      <p style="margin-bottom:12px">教材のNG例は <code>department_id</code> と <code>department_name</code> を同じテーブルに共存させているが、最初からIDを振って設計した場合はこの状態は自然に起きにくい。実際の違反パターンは主に2つある。</p>
+
+      <p style="font-weight:700;margin-bottom:6px">パターン1 — 最初からIDなしで設計した</p>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-family:monospace;font-size:13px;line-height:1.9;margin-bottom:8px">
+        users<br>
+        &nbsp;&nbsp;id<br>
+        &nbsp;&nbsp;name<br>
+        &nbsp;&nbsp;<span style="color:var(--accent2)">department_name　← IDなしで文字列を直接持たせた</span>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">「部署は数個しかないから文字列で直接持てばいい」という判断で設計したケース。後から部署が増えたり名称変更が起きたりしたときに全行更新が必要になって困る。</p>
+
+      <p style="font-weight:700;margin-bottom:6px">パターン2 — FKはあるが、JOINが面倒で情報を後から追加した</p>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-family:monospace;font-size:13px;line-height:1.9;margin-bottom:8px">
+        users<br>
+        &nbsp;&nbsp;id<br>
+        &nbsp;&nbsp;name<br>
+        &nbsp;&nbsp;department_id　← FKとして元々あった（これはOK）<br>
+        &nbsp;&nbsp;<span style="color:var(--accent2)">department_name　← 「JOINが面倒だから」と後から追加（NG）</span>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">JOINを書く手間を省くために、よく使うカラムをそのテーブルに直接追加してしまうケース。IDが設計に入っていても、運用の中で違反が持ち込まれることがある。</p>
+
+      <p style="font-weight:700;margin-bottom:6px">正しい状態のカラム構成</p>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-family:monospace;font-size:13px;line-height:1.9;margin-bottom:8px">
+        users<br>
+        &nbsp;&nbsp;id　　　　　　　← 主キー<br>
+        &nbsp;&nbsp;name　　　　　　← id に依存（OK）<br>
+        &nbsp;&nbsp;<span style="color:var(--accent3)">department_id　← id に依存（OK）。FKとして必要</span><br>
+        &nbsp;&nbsp;<span style="color:var(--accent2)">department_name　← department_id に依存（NG）← 追い出す</span>
+      </div>
+      <p style="font-size:13px;color:var(--muted)"><code>department_id</code> 自体は問題ない。「ユーザーがどの部署に所属しているか」という情報として必要なFK。問題なのは <code>department_name</code> で、これは <code>department_id</code> があれば departments テーブルをJOINすれば取れるものをわざわざ重複して持っている状態。</p>
+    </div>
+  </div>
+
+  <div class="tip">実務でよく見る第3正規形違反の例：orders テーブルに <code>customer_name</code> を直接持つ（<code>customer_id</code> があれば customers からJOINで取れる）、order_items に <code>product_price</code> を直接持つ（products から取れる）など。ただし「注文時点の価格を履歴として保持したい」という意図がある場合は意図的な非正規化として許容されることもある。</div>
+</section>
+
+<!-- ===== 上級者向け ===== -->
+<section>
+  <h2 class="yellow">上級者向け — 設計で判断が必要なポイント</h2>
+
+  <h3>NULL許容の設計判断</h3>
+  <table>
+    <tr><th>状況</th><th>設計</th><th>理由</th></tr>
+    <tr><td>必ず入力されるべき値</td><td>NOT NULL</td><td>アプリ側だけでなくDB側でも強制する</td></tr>
+    <tr><td>任意の項目</td><td>NULL許容</td><td>NULLは「未入力」を表す。空文字とは別物。</td></tr>
+    <tr><td>FKカラム（必須の紐づき）</td><td>NOT NULL</td><td>例：注文の user_id（注文には必ずユーザーが存在する）</td></tr>
+    <tr><td>FKカラム（任意の紐づき）<span class="inline-note">※1</span></td><td>NULL許容</td><td>例：記事の approved_by（未承認の記事は承認者がいない）</td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--muted);margin-top:8px">※1 任意の紐づき = 「あっても なくてもよい」関係。今回の例で言うと、ユーザー作成直後はまだロールが割り当たっていない場合があるケースなど。FKがNULLだと「まだ割り当てられていない」という意味になる。</p>
+
+  <h3>複合主キー vs サロゲートキー（id列）</h3>
+  <p>中間テーブルの主キーをどう設計するか。2つのアプローチがある。</p>
+
+  <table>
+    <tr><th></th><th>複合主キー</th><th>サロゲートキー（id列）</th></tr>
+    <tr><td>定義</td><td>user_id + role_id を PK にする</td><td>別途 id カラムを PK にする</td></tr>
+    <tr><td>重複防止</td><td>自動で防げる</td><td>UNIQUE制約を別途つける必要がある</td></tr>
+    <tr><td>JOIN</td><td>少し複雑になる</td><td>シンプル</td></tr>
+    <tr><td>現場の傾向</td><td>古い設計に多い</td><td>最近はこちらが主流</td></tr>
+  </table>
+
+  <p style="margin-top:12px"><strong>複合主キーの例</strong></p>
+  <pre><span class="cmt">-- user_id + role_id の組み合わせがPK = 同じ組み合わせは必ず1件だけ</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">user_roles</span> (
+    user_id <span class="kw">INT NOT NULL</span>,
+    role_id <span class="kw">INT NOT NULL</span>,
+    <span class="kw">PRIMARY KEY</span> (user_id, role_id),  <span class="cmt">-- 2カラムを合わせてPK</span>
+    <span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id),
+    <span class="kw">FOREIGN KEY</span> (role_id) <span class="kw">REFERENCES</span> <span class="tbl">roles</span>(id)
+);</pre>
+
+  <p style="margin-top:12px"><strong>サロゲートキー（今回の設計）の例</strong></p>
+  <pre><span class="cmt">-- id列をPKにして、重複防止はUNIQUE制約で対応する</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">user_roles</span> (
+    id      <span class="kw">INT PRIMARY KEY AUTO_INCREMENT</span>,
+    user_id <span class="kw">INT NOT NULL</span>,
+    role_id <span class="kw">INT NOT NULL</span>,
+    <span class="kw">UNIQUE</span> (user_id, role_id),  <span class="cmt">-- 重複防止はUNIQUE制約で</span>
+    <span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id),
+    <span class="kw">FOREIGN KEY</span> (role_id) <span class="kw">REFERENCES</span> <span class="tbl">roles</span>(id)
+);</pre>
+
+  <h3>ON DELETE とは</h3>
+  <p>親テーブルのレコードを削除したとき、そのレコードを参照している子テーブルの行をどう扱うかを指定するオプション。</p>
+  <p>例えば users から user_id=1 を削除するとき、user_roles に user_id=1 の行が残っていたら参照先がなくなる（整合性が崩れる）。これをどう処理するかの設定。</p>
+
+  <table>
+    <tr><th>オプション</th><th>動作</th><th>使いどころ</th></tr>
+    <tr><td>CASCADE</td><td>親を削除したら子も自動で削除</td><td>中間テーブルや親に従属するデータ。ユーザー削除時に user_roles も一緒に消したい場合など</td></tr>
+    <tr><td>RESTRICT</td><td>子が存在する場合は親の削除を禁止（エラーになる）</td><td>誤削除を防ぎたい重要データ。注文が残っているユーザーは消せないようにするなど</td></tr>
+    <tr><td>SET NULL</td><td>子のFKカラムをNULLに更新する</td><td>紐づきだけ外してデータは残したい場合。承認者が退職したが記事は残したいなど</td></tr>
+    <tr><td>NO ACTION</td><td>何もしない（DBによりRESSTRICTと同じ動作）</td><td>アプリ側で削除順序を制御する場合</td></tr>
+  </table>
+
+  <pre><span class="cmt">-- CASCADE: ユーザー削除時にuser_rolesも自動で消える</span>
+<span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id) <span class="kw">ON DELETE CASCADE</span>
+
+<span class="cmt">-- RESTRICT: 注文が残っているユーザーは削除できない</span>
+<span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id) <span class="kw">ON DELETE RESTRICT</span>
+
+<span class="cmt">-- SET NULL: 承認者が消えても記事は残す（approved_byはNULL許容が必要）</span>
+<span class="kw">FOREIGN KEY</span> (approved_by) <span class="kw">REFERENCES</span> <span class="tbl">users</span>(id) <span class="kw">ON DELETE SET NULL</span></pre>
+
+  <h3>インデックスとはどうして速くなるのか</h3>
+  <p>インデックスは「本の索引（インデックスページ）」と同じ仕組み。</p>
+
+  <p>インデックスなしで検索する場合、DBは先頭から全行を順番にスキャンする（フルスキャン）。100万行あれば100万行全部見る。</p>
+
+  <div class="er-wrap" style="padding:16px">
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" width="700" style="max-width:100%">
+      <text x="10" y="18" fill="#ff6b6b" font-size="12" font-weight="700">✗ インデックスなし — 全行をスキャン</text>
+      <!-- 行ブロック -->
+      <rect x="10" y="28" width="50" height="28" rx="3" fill="#1a1e2e" stroke="#252a3d"/>
+      <text x="35" y="47" text-anchor="middle" fill="#64748b" font-size="11">id=1</text>
+      <rect x="65" y="28" width="50" height="28" rx="3" fill="#1a1e2e" stroke="#252a3d"/>
+      <text x="90" y="47" text-anchor="middle" fill="#64748b" font-size="11">id=2</text>
+      <rect x="120" y="28" width="50" height="28" rx="3" fill="#1a1e2e" stroke="#252a3d"/>
+      <text x="145" y="47" text-anchor="middle" fill="#64748b" font-size="11">id=3</text>
+      <text x="178" y="47" fill="#64748b" font-size="18">···</text>
+      <rect x="220" y="28" width="70" height="28" rx="3" fill="#4ade80" fill-opacity="0.2" stroke="#4ade80"/>
+      <text x="255" y="47" text-anchor="middle" fill="#4ade80" font-size="11">id=9999 ✓</text>
+      <text x="298" y="47" fill="#64748b" font-size="18">···</text>
+      <rect x="340" y="28" width="80" height="28" rx="3" fill="#1a1e2e" stroke="#252a3d"/>
+      <text x="380" y="47" text-anchor="middle" fill="#64748b" font-size="11">id=100万</text>
+      <!-- 矢印 -->
+      <path d="M10,70 L400,70" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+      <text x="200" y="86" text-anchor="middle" fill="#ff6b6b" font-size="11">id=9999 を探すのに全100万行を舐める</text>
+
+      <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ff6b6b"/></marker>
+      <marker id="arr2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4ade80"/></marker></defs>
+
+      <text x="10" y="115" fill="#4ade80" font-size="12" font-weight="700">✓ インデックスあり — 木構造で一気に絞り込む</text>
+      <!-- 木構造イメージ -->
+      <rect x="290" y="125" width="80" height="24" rx="3" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="330" y="141" text-anchor="middle" fill="#4f9eff" font-size="11">id=50万</text>
+      <rect x="160" y="155" width="70" height="24" rx="3" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="195" y="171" text-anchor="middle" fill="#4f9eff" font-size="11">id=25万</text>
+      <rect x="420" y="155" width="70" height="24" rx="3" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="455" y="171" text-anchor="middle" fill="#4f9eff" font-size="11">id=75万</text>
+      <line x1="290" y1="147" x2="230" y2="155" stroke="#4f9eff" stroke-width="1"/>
+      <line x1="370" y1="147" x2="420" y2="155" stroke="#4f9eff" stroke-width="1"/>
+      <text x="550" y="141" fill="#e2e8f0" font-size="11">9999 &lt; 50万</text>
+      <text x="550" y="156" fill="#e2e8f0" font-size="11">→ 左へ</text>
+      <text x="550" y="171" fill="#4ade80" font-size="11">数回の比較で到達</text>
+    </svg>
+  </div>
+
+  <p>インデックスはB-tree（バランス木）という構造でデータを管理している。「9999を探せ」と言われたら、まず「50万より小さいか」→「25万より小さいか」→「1万より大きいか」と二分探索で絞り込んでいく。100万行あっても20回程度の比較で見つかる。</p>
+
+  <pre><span class="cmt">-- FKカラムへのインデックス（JOINやWHEREで頻繁に使うカラム）</span>
+<span class="kw">CREATE INDEX</span> idx_user_roles_user_id <span class="kw">ON</span> <span class="tbl">user_roles</span> (user_id);
+<span class="kw">CREATE INDEX</span> idx_user_roles_role_id <span class="kw">ON</span> <span class="tbl">user_roles</span> (role_id);
+
+<span class="cmt">-- 複合インデックス: 重複防止も兼ねる</span>
+<span class="kw">CREATE UNIQUE INDEX</span> idx_user_roles_unique <span class="kw">ON</span> <span class="tbl">user_roles</span> (user_id, role_id);</pre>
+
+  <div class="warn"><strong>⚠ インデックスを闇雲につけると逆に遅くなる</strong>
+インデックスはSELECT（検索）を速くするが、INSERT・UPDATE・DELETE のたびにインデックスも更新するコストがかかる。書き込みが多いテーブルに大量のインデックスをつけると書き込み処理が遅くなる。よく使う検索条件（WHERE句・JOIN・ORDER BY）のカラムに絞ってつけるのが基本。</div>
+
+  <h3>複合主キー vs サロゲートキーとON DELETEの判断まとめ</h3>
+  <table>
+    <tr><th>シーン</th><th>推奨</th></tr>
+    <tr><td>中間テーブルのPK</td><td>サロゲートキー（id）+ UNIQUE制約が最近の主流</td></tr>
+    <tr><td>ユーザー削除→紐づくデータも消えてほしい</td><td>ON DELETE CASCADE</td></tr>
+    <tr><td>重要データの誤削除を防ぎたい</td><td>ON DELETE RESTRICT</td></tr>
+    <tr><td>親が消えても子のデータは残したい</td><td>ON DELETE SET NULL（FKはNULL許容が必要）</td></tr>
+  </table>
+</section>
+
+<!-- ===== 読み方まとめ ===== -->
+<section>
+  <h2 class="gray">ER図の読み方まとめ</h2>
+  <table>
+    <tr><th>見るポイント</th><th>確認すること</th></tr>
+    <tr><td>線の端の記号</td><td>縦線=1、カラス足=多。どちら側が1でどちらが多か確認する</td></tr>
+    <tr><td>PK（主キー）</td><td>何でレコードを一意に識別するか</td></tr>
+    <tr><td>FK（外部キー）</td><td>どのテーブルのどのカラムを参照しているか</td></tr>
+    <tr><td>中間テーブル</td><td>多対多の関係を実現している。必ず2つのFKを持つ</td></tr>
+    <tr><td>NOT NULL / NULL許容</td><td>そのカラムが必須かどうか</td></tr>
+    <tr><td>UNIQUE制約</td><td>重複を許さないカラム（メールアドレス・ロール名など）</td></tr>
+  </table>
+  <div class="tip">ER図を見たらまず「テーブル数と中間テーブルの有無」を確認する。中間テーブルがあれば多対多の関係がある。次にPK→FKの流れを追って「どのテーブルがどのテーブルに依存しているか」を把握すると全体の構造が見えてくる。</div>
+</section>
+
+</div>
+</body>
+</html>

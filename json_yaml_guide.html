@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON / YAML 基礎教材 — toma-notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg:       #f4f6fb;
+    --surface:  #ffffff;
+    --border:   #e2e6f0;
+    --text:     #1a1d2e;
+    --muted:    #8890aa;
+    --accent:   #4f5ef7;
+    --json:     #d97706;
+    --yaml:     #1e88c8;
+    --ok:       #16a05a;
+    --ok-bg:    #f0faf4;
+    --ok-border:#b6e8cc;
+    --ng:       #c0365a;
+    --ng-bg:    #fff0f4;
+    --ng-border:#f0b6c8;
+    --tip-bg:   #f0f2ff;
+    --tip-border:#c8ccf8;
+    --tip-text: #4f5ef7;
+    /* コードブロック（ダーク） */
+    --code-bg:  #0a0c14;
+    --code-text:#e2e4f0;
+    --code-kw:  #c084fc;
+    --code-str: #3dd68c;
+    --code-num: #f59e42;
+    --code-cmt: #4a5070;
+    --code-key: #60c8f0;
+    --code-bool:#e05c8a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ヘッダー */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 24px;
+  }
+  .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: var(--muted); }
+  .badges { display: flex; gap: 8px; margin-top: 14px; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; }
+  .badge-json { background: #fef3c7; color: var(--json); }
+  .badge-yaml { background: #dbeafe; color: var(--yaml); }
+  .badge-level { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  /* レイアウト */
+  .container { max-width: 860px; margin: 0 auto; padding: 40px 40px 80px; }
+
+  /* セクション */
+  .section { margin-bottom: 56px; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .section-sub { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  h3 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; }
+  h4 {
+    font-size: 11px; font-weight: 700;
+    margin: 20px 0 8px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  p { margin-bottom: 12px; }
+
+  /* コードブロック（ダーク） */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 0 0 8px 8px;
+    padding: 18px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-wrap { margin: 12px 0; }
+  .code-label {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 6px 6px 0 0;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .code-label.json { background: #2d1f07; color: #f59e42; }
+  .code-label.yaml { background: #0a2030; color: #60c8f0; }
+  .code-label.ok   { background: #0f2d1e; color: #3dd68c; }
+  .code-label.ng   { background: #2d0f1c; color: #e05c8a; }
+
+  .kw   { color: var(--code-kw); }
+  .str  { color: var(--code-str); }
+  .num  { color: var(--code-num); }
+  .cmt  { color: var(--code-cmt); font-style: italic; }
+  .key  { color: var(--code-key); }
+  .bool { color: var(--code-bool); }
+  .null { color: var(--code-bool); }
+
+  /* NG/OK 対比 */
+  .compare { margin: 12px 0; }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .compare-item { min-width: 0; }
+  .compare-item .code-block { border-radius: 0 0 6px 6px; font-size: 12px; }
+
+  /* 警告カード */
+  .warn {
+    background: var(--ng-bg);
+    border: 1px solid var(--ng-border);
+    border-left: 3px solid var(--ng);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .warn-title { font-size: 13px; font-weight: 700; color: var(--ng); margin-bottom: 8px; }
+  .warn p { font-size: 13px; margin: 0 0 8px; }
+  .warn p:last-child { margin: 0; }
+
+  /* Tip */
+  .tip {
+    background: var(--tip-bg);
+    border: 1px solid var(--tip-border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #3a4080;
+  }
+  .tip strong { color: var(--accent); }
+
+  /* テーブル */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  th { background: var(--bg); padding: 10px 14px; text-align: left; font-weight: 700; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .td-ok { color: var(--ok); font-weight: 600; }
+  .td-ng { color: var(--ng); font-weight: 600; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
+
+  /* サマリー */
+  .summary { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .summary-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .summary-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--muted); min-width: 240px; flex-shrink: 0; }
+  .summary-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb"><a href="index.html">toma-notes</a> / ツール・その他</div>
+  <h1>JSON / YAML 基礎教材</h1>
+  <div class="subtitle">データ形式の基本をまとめた学習用リファレンス</div>
+  <div class="badges">
+    <span class="badge badge-json">JSON</span>
+    <span class="badge badge-yaml">YAML</span>
+    <span class="badge badge-level">入門</span>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- JSON -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fef3c7">📦</div>
+    <div class="section-title" style="color:var(--json)">JSON</div>
+    <div class="section-sub">JavaScript Object Notation</div>
+  </div>
+
+  <p>データを表現する形式。APIのレスポンスや設定ファイルなど広く使われる。<strong>型は6種類だけ</strong>。</p>
+
+  <h3>6種類の型</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0">
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">文字列</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#16a05a">"hello"</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">ダブルクォートで囲む</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">数値</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#d97706">42 / 3.14</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">整数・小数どちらもOK</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">真偽値</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#c0365a">true / false</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">小文字のみ有効</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">null</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#c0365a">null</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">値なしを明示する</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">配列</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#4f5ef7">[1, 2, 3]</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">順番ありのリスト</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">オブジェクト</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#1e88c8">{"key": "val"}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">キーと値のペア</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label json">全型まとめ例</div>
+    <div class="code-block"><span class="cmt">// JSONはコメントが書けない。これは説明用</span>
+{
+  <span class="key">"文字列"</span>: <span class="str">"hello"</span>,
+  <span class="key">"数値"</span>: <span class="num">42</span>,
+  <span class="key">"小数"</span>: <span class="num">3.14</span>,
+  <span class="key">"真偽値"</span>: <span class="bool">true</span>,
+  <span class="key">"null"</span>: <span class="null">null</span>,
+  <span class="key">"配列"</span>: [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>],
+  <span class="key">"オブジェクト"</span>: {
+    <span class="key">"key1"</span>: <span class="str">"value1"</span>,
+    <span class="key">"key2"</span>: <span class="str">"value2"</span>
+  }
+}</div>
+  </div>
+
+  <h3>配列の中にオブジェクト（DBのテーブルに近いイメージ）</h3>
+  <div class="code-wrap">
+    <div class="code-label json">JSON</div>
+    <div class="code-block">{
+  <span class="key">"users"</span>: [
+    { <span class="key">"name"</span>: <span class="str">"山田"</span>, <span class="key">"age"</span>: <span class="num">32</span> },
+    { <span class="key">"name"</span>: <span class="str">"田中"</span>, <span class="key">"age"</span>: <span class="num">28</span> }
+  ]
+}</div>
+  </div>
+
+  <h3>連想配列として使う（VBAのDICTIONARYと同じ感覚）</h3>
+  <div class="code-wrap">
+    <div class="code-label json">JSON</div>
+    <div class="code-block">{
+  <span class="key">"fruits"</span>: {
+    <span class="key">"apple"</span>:  <span class="str">"りんご"</span>,
+    <span class="key">"banana"</span>: <span class="str">"バナナ"</span>,
+    <span class="key">"orange"</span>: <span class="str">"みかん"</span>
+  }
+}</div>
+  </div>
+
+  <h3>詰まりやすいポイント</h3>
+
+  <div class="warn">
+    <div class="warn-title">⚠ ケツカンマ問題</div>
+    <p>最後の要素にカンマをつけるとエラーになる。JavaScriptはOKだがJSONは厳格。</p>
+    <div class="compare">
+      <div class="compare-grid">
+        <div class="compare-item">
+          <div class="code-label ng">NG</div>
+          <div class="code-block"><span class="key">"age"</span>: <span class="num">32</span><span style="color:#e05c8a">,</span>
+<span class="cmt">// 最後の要素の後にカンマ</span></div>
+        </div>
+        <div class="compare-item">
+          <div class="code-label ok">OK</div>
+          <div class="code-block"><span class="key">"age"</span>: <span class="num">32</span>
+<span class="cmt">// カンマなし</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn">
+    <div class="warn-title">⚠ 文字列はダブルクォート必須</div>
+    <p>シングルクォートはJSONでは使えない。JavaScriptと混同しやすいので注意。</p>
+    <div class="compare">
+      <div class="compare-grid">
+        <div class="compare-item">
+          <div class="code-label ng">NG</div>
+          <div class="code-block"><span style="color:#e05c8a">'hello'</span>
+<span class="cmt">// シングルクォート</span></div>
+        </div>
+        <div class="compare-item">
+          <div class="code-label ok">OK</div>
+          <div class="code-block"><span class="str">"hello"</span>
+<span class="cmt">// ダブルクォート</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn">
+    <div class="warn-title">⚠ 数値の落とし穴</div>
+    <p>非常に大きな数値は精度が失われることがある。巨大なIDは文字列として持つ方が安全。</p>
+    <div class="code-wrap" style="margin-top:8px">
+      <div class="code-label json">JSON</div>
+      <div class="code-block"><span class="cmt">// 安全な整数の上限: 9007199254740991</span>
+{ <span class="key">"id"</span>: <span class="str">"12345678901234567890"</span> } <span class="cmt">// 文字列として持つ</span></div>
+    </div>
+  </div>
+
+  <div class="tip"><strong>💡</strong> JSONにはコメントが書けない。コメントが必要な設定ファイルにはYAMLの方が向いている。</div>
+</div>
+
+<!-- YAML -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#dbeafe">📄</div>
+    <div class="section-title" style="color:var(--yaml)">YAML</div>
+    <div class="section-sub">YAML Ain't Markup Language</div>
+  </div>
+
+  <p>JSONより人間が読み書きしやすい形式。設定ファイル（Docker、GitHub Actionsなど）によく使われる。<strong>インデントで構造を表現する</strong>。</p>
+
+  <h3>基本の型・配列・オブジェクト</h3>
+  <div class="code-wrap">
+    <div class="code-label yaml">YAML</div>
+    <div class="code-block"><span class="cmt"># 基本の型</span>
+<span class="key">文字列</span>: <span class="str">hello</span>
+<span class="key">数値</span>: <span class="num">42</span>
+<span class="key">真偽値</span>: <span class="bool">true</span>
+<span class="key">null値</span>: <span class="null">null</span>
+
+<span class="cmt"># オブジェクトの配列</span>
+<span class="key">users</span>:
+  - <span class="key">name</span>: <span class="str">山田</span>
+    <span class="key">age</span>: <span class="num">32</span>
+  - <span class="key">name</span>: <span class="str">田中</span>
+    <span class="key">age</span>: <span class="num">28</span></div>
+  </div>
+
+  <h3>複数行文字列 — | と > と末尾修飾子</h3>
+  <p>「改行をどう扱うか」を記号で指定できる。</p>
+
+  <table>
+    <tr><th>書き方</th><th>末尾の改行</th><th>結果イメージ</th></tr>
+    <tr><td><code>|</code></td><td>1つ自動で付く</td><td><code>"bar\nbaz\n"</code></td></tr>
+    <tr><td><code>|-</code></td><td>削除する</td><td><code>"bar\nbaz"</code></td></tr>
+    <tr><td><code>|+</code></td><td>空行も全部残す</td><td><code>"bar\nbaz\n\n"</code></td></tr>
+  </table>
+
+  <div class="code-wrap">
+    <div class="code-label yaml">YAML</div>
+    <div class="code-block"><span class="cmt"># |- : 末尾の改行を削除（実務で一番よく使う）</span>
+<span class="key">msg</span>: |-
+  吾輩は猫である
+  名前はまだ無い
+<span class="cmt"># 結果: "吾輩は猫である\n名前はまだ無い"</span>
+
+<span class="cmt"># >- : 改行→スペース、末尾削除</span>
+<span class="key">msg</span>: >-
+  吾輩は猫である
+  名前はまだ無い
+<span class="cmt"># 結果: "吾輩は猫である 名前はまだ無い"</span></div>
+  </div>
+
+  <div class="tip"><strong>💡</strong> 実務では <code>|-</code> が一番よく使われる。<code>&gt;-</code> は長い説明文を折り返して書きたいときに使う。</div>
+
+  <h3>詰まりやすいポイント</h3>
+
+  <div class="warn">
+    <div class="warn-title">⚠ インデントはスペース必須・タブNG</div>
+    <p>タブ文字を使うとエラーになる。スペース2個か4個で統一すること。</p>
+  </div>
+
+  <div class="warn">
+    <div class="warn-title">⚠ 型の自動解釈に注意</div>
+    <p>意図しない型変換が起きることがある。</p>
+    <div class="code-wrap" style="margin-top:8px">
+      <div class="code-label yaml">YAML</div>
+      <div class="code-block"><span class="key">flag</span>: yes        <span class="cmt"># → true として解釈される</span>
+<span class="key">version</span>: <span class="num">1.0</span>    <span class="cmt"># → 数値として解釈される</span>
+<span class="key">version</span>: <span class="str">"1.0"</span>  <span class="cmt"># → 文字列にしたいならクォートで囲む</span></div>
+    </div>
+  </div>
+
+  <div class="tip"><strong>💡</strong> YAMLはコメントが書ける（# 以降）。設定ファイルに説明を残せるのが強み。</div>
+</div>
+
+<!-- 比較 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0f2ff">⚖️</div>
+    <div class="section-title">JSON vs YAML 比較</div>
+  </div>
+
+  <div class="compare">
+    <div class="compare-grid">
+      <div class="compare-item">
+        <div class="code-label json">JSON</div>
+        <div class="code-block">{
+  <span class="key">"users"</span>: [
+    {
+      <span class="key">"name"</span>: <span class="str">"山田"</span>,
+      <span class="key">"age"</span>: <span class="num">32</span>,
+      <span class="key">"active"</span>: <span class="bool">true</span>
+    }
+  ]
+}</div>
+      </div>
+      <div class="compare-item">
+        <div class="code-label yaml">YAML</div>
+        <div class="code-block"><span class="key">users</span>:
+  - <span class="key">name</span>: <span class="str">山田</span>
+    <span class="key">age</span>: <span class="num">32</span>
+    <span class="key">active</span>: <span class="bool">true</span></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>項目</th><th>JSON</th><th>YAML</th></tr>
+    <tr><td>構造の表現</td><td>波括弧・角括弧</td><td>インデント</td></tr>
+    <tr><td>コメント</td><td class="td-ng">書けない</td><td class="td-ok">書ける（#）</td></tr>
+    <tr><td>文字列のクォート</td><td>ダブルクォート必須</td><td>省略可</td></tr>
+    <tr><td>主な用途</td><td>APIレスポンス・データ交換</td><td>設定ファイル（Docker等）</td></tr>
+  </table>
+
+  <div class="tip"><strong>💡</strong> JSONの構造が理解できればYAMLも読める。形式が違うだけで表現しているデータは同じ。</div>
+</div>
+
+<!-- エスケープ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f4f6fb">🔤</div>
+    <div class="section-title">エスケープ文字一覧</div>
+  </div>
+
+  <table>
+    <tr><th>エスケープ</th><th>意味</th><th>例</th></tr>
+    <tr><td><code>\"</code></td><td>ダブルクォート</td><td><code>"msg": "He said \"Hello\""</code></td></tr>
+    <tr><td><code>\\</code></td><td>バックスラッシュ</td><td><code>"path": "C:\\Users\\name"</code></td></tr>
+    <tr><td><code>\n</code></td><td>改行</td><td><code>"text": "1行目\n2行目"</code></td></tr>
+    <tr><td><code>\t</code></td><td>タブ</td><td><code>"text": "col1\tcol2"</code></td></tr>
+    <tr><td><code>\uXXXX</code></td><td>Unicode文字</td><td><code>"icon": "\u2603"</code></td></tr>
+  </table>
+
+  <div class="warn">
+    <div class="warn-title">⚠ Windowsのパスは要注意</div>
+    <div class="compare">
+      <div class="compare-grid">
+        <div class="compare-item">
+          <div class="code-label ng">NG</div>
+          <div class="code-block">{ <span class="key">"path"</span>: <span class="str">"C:\Users\name"</span> }
+<span class="cmt">// \U や \n がエスケープとして解釈される</span></div>
+        </div>
+        <div class="compare-item">
+          <div class="code-label ok">OK</div>
+          <div class="code-block">{ <span class="key">"path"</span>: <span class="str">"C:\\Users\\name"</span> }
+<span class="cmt">// バックスラッシュを二重にする</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- まとめ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0f2ff">📋</div>
+    <div class="section-title">まとめ — 複数行文字列の使い分け</div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-title">何を使えばいいか</div>
+    <div class="summary-row">
+      <span class="summary-label">改行を \n として保持したい</span>
+      <span class="summary-val">|-</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">長い文を折り返して書きたい（改行不要）</span>
+      <span class="summary-val">&gt;-</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">改行もスペースも一切入れたくない</span>
+      <span class="summary-val">ダブルクォート + 行末 \</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">末尾の空行まで厳密に制御したい</span>
+      <span class="summary-val">|+ または &gt;+</span>
+    </div>
+  </div>
+
+
+</div>
+
+</div>
+</body>
+</html>

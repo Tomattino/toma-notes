@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>toma-notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg:      #0d0f18;
+    --surface: #161927;
+    --border:  #252840;
+    --text:    #e2e4f0;
+    --muted:   #6b7094;
+    --accent:  #7c8dff;
+    --sql:     #3dd68c;
+    --vue:     #42b883;
+    --db:      #f59e42;
+    --web:     #e05c8a;
+    --backend: #c084fc;
+    --tool:    #60c8f0;
+    --planned: #444760;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+  }
+  .logo { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .tagline { color: var(--muted); font-size: 13px; padding-bottom: 2px; }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px;
+  }
+  .toc-list { display: flex; flex-direction: column; gap: 2px; }
+  .toc-item {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--text);
+    font-size: 13px; padding: 6px 10px;
+    border-radius: 6px; transition: background 0.12s;
+  }
+  .toc-item:hover { background: #1c1f32; }
+  .toc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .toc-count { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+  .section { margin-bottom: 12px; }
+
+  .section-toggle {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    color: var(--text); text-align: left;
+  }
+  .section-toggle:hover { background: #1c1f32; }
+  .section-toggle.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; }
+
+  .section-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); flex: 1;
+  }
+  .section-meta { font-size: 11px; color: var(--muted); }
+  .chevron { font-size: 11px; color: var(--muted); transition: transform 0.2s; }
+  .section-toggle.open .chevron { transform: rotate(180deg); }
+
+  .section-body {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 4px 0 8px;
+  }
+  .section-body.open { display: block; }
+
+  .list { display: flex; flex-direction: column; }
+  .list-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 18px;
+    text-decoration: none; color: inherit;
+    transition: background 0.12s;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .list-item:hover { background: #1c1f32; }
+  .list-item.planned { opacity: 0.45; cursor: default; }
+  .list-item.planned:hover { background: transparent; }
+
+  .list-item.sql::before     { background: var(--sql); }
+  .list-item.vue::before     { background: var(--vue); }
+  .list-item.db::before      { background: var(--db); }
+  .list-item.web::before     { background: var(--web); }
+  .list-item.backend::before { background: var(--backend); }
+  .list-item.tool::before    { background: var(--tool); }
+
+  .level {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px;
+    flex-shrink: 0; width: 52px; text-align: center;
+  }
+  .level-intro   { background: #1a3a2a; color: #3dd68c; }
+  .level-mid     { background: #2a2a10; color: #d4b84a; }
+  .level-adv     { background: #2a1020; color: #e05c8a; }
+  .level-planned { background: #1a1c2e; color: var(--muted); }
+
+  .item-body { flex: 1; }
+  .item-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .item-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .item-ver   { font-size: 11px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">toma<span>-notes</span></div>
+  <div class="tagline">個人学習教材まとめ</div>
+</header>
+
+<main>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--sql)"></div> SQL / DB</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--vue)"></div> Vue / TS</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--db)"></div> 設計</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--web)"></div> Web フロント</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--backend)"></div> バックエンド</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--tool)"></div> ツール / その他</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--planned)"></div> 作成予定</div>
+  </div>
+
+  <nav class="toc">
+    <div class="toc-title">目次</div>
+    <div class="toc-list">
+      <a href="#sql"     class="toc-item"><div class="toc-dot" style="background:var(--sql)"></div>SQL / データベース<span class="toc-count">4件</span></a>
+      <a href="#design"  class="toc-item"><div class="toc-dot" style="background:var(--db)"></div>設計<span class="toc-count">2件</span></a>
+      <a href="#vue"     class="toc-item"><div class="toc-dot" style="background:var(--vue)"></div>Vue / TypeScript<span class="toc-count">3件</span></a>
+      <a href="#web"     class="toc-item"><div class="toc-dot" style="background:var(--web)"></div>Web フロント<span class="toc-count">1件</span></a>
+      <a href="#backend" class="toc-item"><div class="toc-dot" style="background:var(--backend)"></div>バックエンド<span class="toc-count">1件</span></a>
+      <a href="#tool"    class="toc-item"><div class="toc-dot" style="background:var(--tool)"></div>ツール / その他<span class="toc-count">3件</span></a>
+    </div>
+  </nav>
+
+  <!-- SQL -->
+  <div class="section" id="sql">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#0f2d1e">🗄️</div>
+      <span class="section-title">SQL / データベース</span>
+      <span class="section-meta">完成 4件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <a href="sql_guide_v12.html" class="list-item sql">
+          <span class="level level-intro">入門</span>
+          <div class="item-body"><div class="item-title">SQL基礎</div><div class="item-desc">SELECT〜ウィンドウ関数・ROLLUP・UNION・スカラサブクエリ等</div></div>
+          <span class="item-ver">v12</span>
+        </a>
+        <a href="index_guide_v5.html" class="list-item sql">
+          <span class="level level-mid">中級</span>
+          <div class="item-body"><div class="item-title">インデックス</div><div class="item-desc">SARGability・EXPLAIN・計算量・設計指針</div></div>
+          <span class="item-ver">v5</span>
+        </a>
+        <a href="sql_advanced_1_transaction.html" class="list-item sql">
+          <span class="level level-mid">中級</span>
+          <div class="item-body"><div class="item-title">トランザクション</div><div class="item-desc">分離レベル・ロック・デッドロック・MVCC</div></div>
+          <span class="item-ver">v1</span>
+        </a>
+        <a href="sql_advanced_2_explain_cte.html" class="list-item sql">
+          <span class="level level-adv">上級</span>
+          <div class="item-body"><div class="item-title">EXPLAIN / CTE</div><div class="item-desc">実行計画・CTE・CASE式・VIEW・シーケンス</div></div>
+          <span class="item-ver">v1</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設計 -->
+  <div class="section" id="design">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#2d1f07">📐</div>
+      <span class="section-title">設計</span>
+      <span class="section-meta">完成 1件 / 予定 1件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <a href="er_guide_v5.html" class="list-item db">
+          <span class="level level-intro">入門</span>
+          <div class="item-body"><div class="item-title">ER図 / 正規化</div><div class="item-desc">カーディナリティ・中間テーブル・論理削除・CREATE TABLE</div></div>
+          <span class="item-ver">v5</span>
+        </a>
+        <div class="list-item db planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">要件定義 / 設計</div><div class="item-desc">何を決めるか・どんな資料を出すか</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue / TS -->
+  <div class="section" id="vue">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#0d2318">⚡</div>
+      <span class="section-title">Vue / TypeScript</span>
+      <span class="section-meta">完成 2件 / 予定 1件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <a href="vue_guide.html" class="list-item vue">
+          <span class="level level-intro">入門</span>
+          <div class="item-body"><div class="item-title">Vue 3 基礎〜応用</div><div class="item-desc">Composition API・Router・Pinia・ライフサイクル・slot</div></div>
+          <span class="item-ver">v1</span>
+        </a>
+        <a href="vue_typescript_guide.html" class="list-item vue">
+          <span class="level level-mid">中級</span>
+          <div class="item-body"><div class="item-title">TypeScript + Vue</div><div class="item-desc">型定義・props型・Pinia型定義</div></div>
+          <span class="item-ver">v1</span>
+        </a>
+        <div class="list-item vue planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">React 基礎</div><div class="item-desc">Vueと比較しながら学ぶ</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Web フロント -->
+  <div class="section" id="web">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#2d0f1c">🎨</div>
+      <span class="section-title">Web フロント</span>
+      <span class="section-meta">予定 1件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <div class="list-item web planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">CSS 基礎〜実践</div><div class="item-desc">レイアウト・アニメーション・設計手法</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- バックエンド -->
+  <div class="section" id="backend">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#1e0f30">🖥️</div>
+      <span class="section-title">バックエンド</span>
+      <span class="section-meta">予定 1件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <div class="list-item backend planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">PHP / Laravel</div><div class="item-desc">基礎〜複数ロールログイン・課金・Google認証</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ツール / その他 -->
+  <div class="section" id="tool">
+    <button class="section-toggle open" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#0a2030">🛠️</div>
+      <span class="section-title">ツール / その他</span>
+      <span class="section-meta">完成 1件 / 予定 2件</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-body open">
+      <div class="list">
+        <a href="json_yaml_guide.html" class="list-item tool">
+          <span class="level level-intro">入門</span>
+          <div class="item-body"><div class="item-title">JSON / YAML</div><div class="item-desc">基礎から実務的な使い方まで</div></div>
+          <span class="item-ver">v4</span>
+        </a>
+        <div class="list-item tool planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">Git 運用</div><div class="item-desc">ブランチ戦略・運用フロー</div></div>
+        </div>
+        <div class="list-item tool planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">SEO</div><div class="item-desc">SEO基礎・実装ガイド</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  function toggleSection(btn) {
+    btn.classList.toggle('open');
+    btn.nextElementSibling.classList.toggle('open');
+  }
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', () => {
+      const id = link.getAttribute('href').slice(1);
+      const section = document.getElementById(id);
+      if (section) {
+        const btn = section.querySelector('.section-toggle');
+        const body = section.querySelector('.section-body');
+        if (!body.classList.contains('open')) {
+          btn.classList.add('open');
+          body.classList.add('open');
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

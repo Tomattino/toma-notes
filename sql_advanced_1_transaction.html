@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL 中級 — トランザクション・ロック編</title>
+<style>
+  :root {
+    --bg:#0d0f18;--surface:#141720;--surface2:#1a1e2e;--border:#252a3d;
+    --accent:#4f9eff;--accent2:#ff6b6b;--accent3:#4ade80;
+    --yellow:#fbbf24;--purple:#a78bfa;--orange:#fb923c;
+    --text:#e2e8f0;--muted:#64748b;--code-bg:#0a0c14;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.75;padding:48px 24px;}
+  .container{max-width:920px;margin:0 auto;}
+  header{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:48px;}
+  header h1{font-size:30px;font-weight:800;letter-spacing:-0.5px;}
+  header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  section{margin-bottom:64px;}
+  h2{font-size:20px;font-weight:700;padding-left:14px;border-left:3px solid var(--accent);margin-bottom:16px;}
+  h2.red{border-color:var(--accent2);}h2.green{border-color:var(--accent3);}
+  h2.yellow{border-color:var(--yellow);}h2.purple{border-color:var(--purple);}
+  h2.orange{border-color:var(--orange);}h2.gray{border-color:var(--muted);}
+  h3{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:28px 0 10px;}
+  p{margin-bottom:12px;line-height:1.8;}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:'Fira Code','Courier New',monospace;font-size:13.5px;line-height:1.9;margin:10px 0;}
+  .kw{color:#61b8ff;font-weight:600;}.str{color:#4ade80;}.num{color:#fbbf24;}.cmt{color:#4a5568;font-style:italic;}.tbl{color:#fb923c;font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  th{background:var(--surface2);color:var(--muted);font-weight:700;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.8;}
+  .warn strong{color:var(--yellow);display:block;margin-bottom:6px;}
+  .tip{background:rgba(79,158,255,.07);border:1px solid rgba(79,158,255,.35);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:14px;color:#93c5fd;line-height:1.8;}
+  .tip::before{content:"💡 ";}
+  .bad{color:var(--accent2);}.good{color:var(--accent3);}
+  .er-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:24px;margin:16px 0;overflow-x:auto;}
+  .er-wrap svg{display:block;margin:0 auto;}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  @media(max-width:600px){.compare{grid-template-columns:1fr;}}
+  .cbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .cbox-title{font-size:13px;font-weight:700;margin-bottom:10px;}
+  .cbox-title.bad{color:var(--accent2);}.cbox-title.good{color:var(--accent3);}
+  .db-note{display:inline-block;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);border-radius:4px;padding:1px 8px;font-size:11px;color:var(--purple);font-weight:700;margin-left:6px;}
+  /* タイムライン */
+  .timeline{display:grid;gap:0;margin:16px 0;font-size:13px;}
+  .tl-row{display:grid;grid-template-columns:120px 1fr 1fr;gap:0;border-bottom:1px solid var(--border);}
+  .tl-row:first-child{background:var(--surface2);}
+  .tl-time{padding:8px 12px;color:var(--muted);font-family:monospace;border-right:1px solid var(--border);}
+  .tl-a{padding:8px 12px;border-right:1px solid var(--border);}
+  .tl-b{padding:8px 12px;}
+  .tl-header{font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+  .tl-a.act{background:rgba(79,158,255,.08);color:var(--accent);}
+  .tl-b.act{background:rgba(255,107,107,.08);color:var(--accent2);}
+  .tl-a.wait{color:var(--muted);font-style:italic;}
+  .tl-b.wait{color:var(--muted);font-style:italic;}
+  .tl-a.err{background:rgba(255,107,107,.15);color:var(--accent2);font-weight:700;}
+  .tl-b.err{background:rgba(255,107,107,.15);color:var(--accent2);font-weight:700;}
+  .tl-a.ok{background:rgba(74,222,128,.08);color:var(--accent3);}
+  .tl-b.ok{background:rgba(74,222,128,.08);color:var(--accent3);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>SQL 中級 — トランザクション・ロック編</h1>
+  <p>データの整合性を守る仕組みと、並行処理の落とし穴</p>
+</header>
+
+<!-- ===== トランザクションとは ===== -->
+<section>
+  <h2 class="gray">トランザクションとは</h2>
+  <p>複数のSQL操作を「一塊の処理」として扱う仕組み。<strong>全部成功するか、全部なかったことになるか</strong>の2択にできる。</p>
+  <p>例：銀行の送金。「A口座から1万円引く」と「B口座に1万円加える」の2つは必ずセットで成功しないといけない。片方だけ成功すると1万円が消える。</p>
+
+  <h3>ACID特性 — トランザクションが保証する4つの性質</h3>
+  <table>
+    <tr><th>性質</th><th>意味</th><th>具体例</th></tr>
+    <tr><td><strong>A</strong>tomicity（原子性）</td><td>全部成功か全部失敗か。中途半端な状態にならない</td><td>送金の途中でエラーになっても、引き落としだけが残らない</td></tr>
+    <tr><td><strong>C</strong>onsistency（一貫性）</td><td>トランザクション前後でデータが整合している</td><td>送金前後で両口座の合計残高が変わらない</td></tr>
+    <tr><td><strong>I</strong>solation（独立性）</td><td>並行するトランザクションが互いに干渉しない</td><td>自分の処理中に他の人の処理が混入しない</td></tr>
+    <tr><td><strong>D</strong>urability（永続性）</td><td>コミットしたデータはシステム障害が起きても消えない</td><td>確定した送金はサーバー再起動後も残る</td></tr>
+  </table>
+
+  <h3>基本構文</h3>
+  <pre><span class="kw">BEGIN</span>;  <span class="cmt">-- トランザクション開始（START TRANSACTION とも書く）</span>
+
+<span class="cmt">-- ここに複数の操作を書く</span>
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">10000</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance + <span class="num">10000</span> <span class="kw">WHERE</span> id = <span class="num">2</span>;
+
+<span class="kw">COMMIT</span>;    <span class="cmt">-- 全部確定（ここで初めてDBに永続的に反映される）</span>
+<span class="cmt">-- ROLLBACK; -- 全部なかったことにする</span></pre>
+
+  <div class="tip">COMMITするまでは他のセッションからは変更が見えない（分離レベルによる）。COMMIT前ならROLLBACKでいつでも取り消せる。</div>
+</section>
+
+<!-- ===== ロールバックの具体例 ===== -->
+<section>
+  <h2>ロールバック — 失敗したときに巻き戻す</h2>
+  <p>処理の途中でエラーが起きたとき、それまでの変更をまとめて取り消す。アプリ側でエラーハンドリングと組み合わせて使う。</p>
+
+  <h3>正常系と異常系のパターン</h3>
+  <pre><span class="cmt">-- 正常系: 両方のUPDATEが成功したらCOMMIT</span>
+<span class="kw">BEGIN</span>;
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span>
+<span class="kw">SET</span>   balance = balance - <span class="num">10000</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">AND</span> balance >= <span class="num">10000</span>; <span class="cmt">-- 残高不足チェック</span>
+
+<span class="cmt">-- アプリ側で影響行数を確認（0行ならROLLBACK）</span>
+<span class="cmt">-- affected_rows = 0 → ROLLBACK して「残高不足」エラーを返す</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span>
+<span class="kw">SET</span>   balance = balance + <span class="num">10000</span>
+<span class="kw">WHERE</span> id = <span class="num">2</span>;
+
+<span class="kw">COMMIT</span>; <span class="cmt">-- 両方成功したら確定</span></pre>
+
+  <pre><span class="cmt">-- 異常系: エラー発生時にROLLBACKで全部取り消す</span>
+<span class="kw">BEGIN</span>;
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">10000</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="cmt">-- ここでDBエラーやアプリエラーが発生</span>
+
+<span class="kw">ROLLBACK</span>; <span class="cmt">-- ↑のUPDATEもなかったことになる</span>
+<span class="cmt">-- id=1 の残高は元の値のまま</span></pre>
+
+  <h3>SAVEPOINTで部分的にロールバックする</h3>
+  <p>大きなトランザクションの中で「ここまでは確定、ここからだけ取り消したい」というときに使う。</p>
+  <pre><span class="kw">BEGIN</span>;
+
+<span class="kw">INSERT INTO</span> <span class="tbl">orders</span> (user_id, amount) <span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">5000</span>);
+
+<span class="kw">SAVEPOINT</span> after_order; <span class="cmt">-- ここにセーブポイントを作る</span>
+
+<span class="kw">INSERT INTO</span> <span class="tbl">order_items</span> (order_id, product_id) <span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">101</span>);
+<span class="cmt">-- order_itemsの登録だけ失敗したとする</span>
+
+<span class="kw">ROLLBACK TO</span> after_order; <span class="cmt">-- order_itemsの登録だけ取り消し（ordersは残る）</span>
+
+<span class="cmt">-- リトライ処理などを入れてからCOMMIT</span>
+<span class="kw">COMMIT</span>;</pre>
+
+  <div class="warn"><strong>⚠ ROLLBACKはDDL（CREATE/DROP/ALTER/TRUNCATE）には効かない場合が多い</strong>
+MySQLではDDLは自動的にCOMMITされる。TRUNCATEもROLLBACKできないDBが多い。変更が大きいスキーマ操作は必ずバックアップを先に取る。<span class="db-note">DB固有</span></div>
+</section>
+
+<!-- ===== 分離レベル ===== -->
+<section>
+  <h2 class="purple">トランザクション分離レベル</h2>
+  <p>並行するトランザクションが互いにどの程度影響し合うかを制御する設定。安全性と性能のトレードオフがある。</p>
+
+  <h3>分離レベルで発生しうる問題</h3>
+  <table>
+    <tr><th>問題名</th><th>何が起きるか</th><th>具体例</th></tr>
+    <tr><td>ダーティリード</td><td>まだCOMMITされていない（取り消されるかもしれない）他トランザクションのデータを読んでしまう</td><td>Aが残高を90000に変更中（未COMMIT）。BがSELECTすると90000が見える。その後AがROLLBACKすると、Bが見た90000は存在しないデータだった</td></tr>
+    <tr><td>ノンリピータブルリード</td><td>同じSELECTを2回実行したら、間に別トランザクションがCOMMITして結果が変わってしまう</td><td>Aがid=1の残高を読んで100000。次の処理で再度読んだら90000になっていた（BがCOMMITしたため）。同じトランザクション内で値が変わる</td></tr>
+    <tr><td>ファントムリード</td><td>同じ条件のSELECTを2回実行したら、間に別トランザクションがINSERTして行数が増えてしまう</td><td>Aが「残高10万以上の口座」を集計して3件。次に再集計したら4件になっていた（Bが新しい口座をINSERTしてCOMMITしたため）</td></tr>
+  </table>
+
+  <h3>分離レベルと防げる問題</h3>
+  <table>
+    <tr><th>分離レベル</th><th>ダーティリード</th><th>ノンリピータブルリード</th><th>ファントムリード</th><th>性能</th></tr>
+    <tr><td>READ UNCOMMITTED</td><td class="bad">発生する</td><td class="bad">発生する</td><td class="bad">発生する</td><td>最速</td></tr>
+    <tr><td>READ COMMITTED</td><td class="good">防げる</td><td class="bad">発生する</td><td class="bad">発生する</td><td>速い</td></tr>
+    <tr><td>REPEATABLE READ</td><td class="good">防げる</td><td class="good">防げる</td><td class="bad">発生する※</td><td>普通</td></tr>
+    <tr><td>SERIALIZABLE</td><td class="good">防げる</td><td class="good">防げる</td><td class="good">防げる</td><td>遅い</td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--muted)">※ MySQLのREPEATABLE READはMVCC（後述）によりファントムリードも防げる場合が多い。</p>
+
+  <pre><span class="cmt">-- 分離レベルの確認と変更（MySQL）</span>
+<span class="kw">SELECT</span> @@transaction_isolation;  <span class="cmt">-- 現在の分離レベルを確認</span>
+
+<span class="kw">SET</span> SESSION transaction_isolation = <span class="str">'READ-COMMITTED'</span>;  <span class="cmt">-- セッション単位で変更</span>
+<span class="kw">SET</span> GLOBAL  transaction_isolation = <span class="str">'REPEATABLE-READ'</span>; <span class="cmt">-- サーバー全体で変更</span></pre>
+
+  <div class="tip">MySQLのデフォルトはREPEATABLE READ。PostgreSQLのデフォルトはREAD COMMITTED。多くのWebアプリはデフォルトのまま使って問題ない。<span class="db-note">DB固有</span></div>
+
+  <h3>なぜ分離レベルで防げるのか</h3>
+  <p>「読み取りを禁止する」のではなく、<strong>「どのタイミングのデータを見せるか」を制御している</strong>。</p>
+  <table>
+    <tr><th>分離レベル</th><th>どう防いでいるか</th></tr>
+    <tr><td>READ COMMITTED</td><td>「COMMITされたデータだけを返す」というルールで動く。COMMITされていないデータは存在しないものとして扱う。ダーティリードが防げるのはこのため</td></tr>
+    <tr><td>REPEATABLE READ</td><td>「このトランザクションが始まった時点のスナップショットを見せ続ける」というルールで動く。他がCOMMITしても、自分のトランザクション中は最初に見たデータが返ってくる</td></tr>
+    <tr><td>SERIALIZABLE</td><td>読み取り対象の行全体にロックをかけて、他のトランザクションの変更・追加をブロックする。最も安全だが最も遅い</td></tr>
+  </table>
+
+  <h3>ロック待機中のクエリはどうなる？</h3>
+  <p>ロックが取れないとき、クエリは基本的に<strong>保留（待機）</strong>になる。エラーにはならず、ロックが解放されるまでじっと待つ。</p>
+  <table>
+    <tr><th>状況</th><th>動作</th></tr>
+    <tr><td>通常のロック待機</td><td>保留（待機）。ロック解放後に自動的に処理が続く</td></tr>
+    <tr><td>タイムアウト設定あり（innodb_lock_wait_timeout）</td><td>設定時間が過ぎるとエラーが返る。デフォルトは50秒</td></tr>
+    <tr><td>デッドロック検出時</td><td>DBが自動検出して一方を強制的にROLLBACKしエラーを返す。これだけは即時エラー</td></tr>
+  </table>
+
+  <h3>「遅い」の目安</h3>
+  <p>ロックやトランザクションで処理が遅くなるとは具体的にどのくらいか。Webアプリでの目安：</p>
+  <table>
+    <tr><th>応答時間</th><th>体感</th></tr>
+    <tr><td>〜100ms</td><td>快適。ほぼ待ち時間を感じない</td></tr>
+    <tr><td>100〜500ms</td><td>許容範囲。少し待つ感覚がある</td></tr>
+    <tr><td>500ms〜1秒</td><td>体感で遅い。ユーザーが「重いな」と感じ始める</td></tr>
+    <tr><td>1秒以上</td><td>明確に遅い。離脱・不満につながる</td></tr>
+  </table>
+  <p>MySQLのlong_query_timeデフォルトは10秒だが、実務では0.5〜2秒に設定することが多い。バッチ処理は数分かかっても許容される場合がある。</p>
+
+  <h3>transaction_isolation とは</h3>
+  <p>DBの動作を変えるための<strong>システム変数</strong>のひとつ。カラムではなく「DBサーバ全体の設定項目」。<code>innodb_lock_wait_timeout</code>（ロックタイムアウト秒数）や<code>max_connections</code>（最大接続数）なども同じ種類の設定変数で、<code>SHOW VARIABLES;</code>で全一覧を確認できる。</p>
+  <table>
+    <tr><th>スコープ</th><th>意味</th><th>特徴</th></tr>
+    <tr><td>SESSION</td><td>自分が接続している間だけ有効</td><td>接続を切ると元の設定に戻る。他のユーザーに影響しない</td></tr>
+    <tr><td>GLOBAL</td><td>そのDBサーバに接続している全員に影響</td><td>サーバ再起動後も設定が残る（my.cnfに書いた場合）。本番での変更は慎重に</td></tr>
+  </table>
+
+  <h3>ダーティリードの具体例（タイムライン）</h3>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-time tl-header">時刻</div>
+      <div class="tl-a tl-header">トランザクションA（送金処理）</div>
+      <div class="tl-b tl-header">トランザクションB（残高確認）</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T1</div>
+      <div class="tl-a act">BEGIN</div>
+      <div class="tl-b"></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T2</div>
+      <div class="tl-a act">UPDATE accounts SET balance=90000 WHERE id=1<br><small>（まだCOMMITしていない）</small></div>
+      <div class="tl-b"></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T3</div>
+      <div class="tl-a"></div>
+      <div class="tl-b act">SELECT balance FROM accounts WHERE id=1<br><small>→ 90000 を読む（ダーティリード！）</small></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T4</div>
+      <div class="tl-a err">ROLLBACK（送金キャンセル）<br><small>残高は100000に戻る</small></div>
+      <div class="tl-b"></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T5</div>
+      <div class="tl-a"></div>
+      <div class="tl-b err">Bは90000と表示したが実際は100000<br><small>存在しないデータを読んでしまった</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ロック ===== -->
+<section>
+  <h2 class="orange">ロック — 同時アクセスの衝突を防ぐ</h2>
+  <p>複数のトランザクションが同じデータを同時に変更しようとしたときの衝突を防ぐ仕組み。</p>
+
+  <h3>共有ロックと排他ロック</h3>
+  <table>
+    <tr><th>種類</th><th>別名</th><th>他の共有ロックと共存</th><th>他の排他ロックと共存</th><th>用途</th></tr>
+    <tr><td>共有ロック（S Lock）</td><td>読み取りロック</td><td class="good">できる</td><td class="bad">できない</td><td>SELECT FOR SHARE</td></tr>
+    <tr><td>排他ロック（X Lock）</td><td>書き込みロック</td><td class="bad">できない</td><td class="bad">できない</td><td>SELECT FOR UPDATE / UPDATE / DELETE</td></tr>
+  </table>
+
+  <pre><span class="cmt">-- 排他ロック: 他のトランザクションがUPDATEできなくなる</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>
+<span class="kw">FOR UPDATE</span>; <span class="cmt">-- このレコードに排他ロックをかける</span>
+
+<span class="cmt">-- この間、他のトランザクションはid=1をUPDATEしようとすると待機させられる</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">10000</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>; <span class="cmt">-- COMMITするとロックが解放される</span>
+
+<span class="cmt">-- 共有ロック: 読み取りはできるが更新はブロック</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">FOR SHARE</span>;</pre>
+
+  <p style="font-size:13px;color:var(--muted);margin-top:4px">「共有ロック同士は共存できる」= 複数のトランザクションが同時にSELECT FOR SHAREできる。読むだけなら衝突しないので。<br>ただし共有ロック中にUPDATEしようとすると<strong>待機させられる</strong>。共有ロックが全て解放されるまで排他ロックは取れない。「読んでいる途中に書き換えられる」は起きない。</p>
+
+  <h3>楽観ロック vs 悲観ロック</h3>
+  <p>ロックの戦略として2つのアプローチがある。</p>
+
+  <div class="compare">
+    <div class="cbox">
+      <div class="cbox-title" style="color:var(--accent)">悲観ロック（Pessimistic Lock）</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">「衝突が起きるだろう」と想定して、最初からロックを取る。</p>
+      <pre style="font-size:12px;margin:0"><span class="kw">BEGIN</span>;
+<span class="cmt">-- 読む時点でロックをかける</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>
+<span class="kw">FOR UPDATE</span>;
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span>
+<span class="kw">SET</span>   balance = balance - <span class="num">10000</span>
+<span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>;</pre>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">✓ 衝突が確実に防げる<br>✗ ロック中は他が待機→性能低下</p>
+    </div>
+    <div class="cbox">
+      <div class="cbox-title" style="color:var(--accent3)">楽観ロック（Optimistic Lock）</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">「衝突はめったに起きない」と想定してロックしない。更新時に変更されていないか確認する。</p>
+      <pre style="font-size:12px;margin:0"><span class="cmt">-- versionカラムで管理</span>
+<span class="kw">SELECT</span> id, balance, version
+<span class="kw">FROM</span>  <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="cmt">-- version=5 を取得したとする</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">accounts</span>
+<span class="kw">SET</span>
+    balance = balance - <span class="num">10000</span>,
+    version = version + <span class="num">1</span>
+<span class="kw">WHERE</span> id      = <span class="num">1</span>
+  <span class="kw">AND</span> version = <span class="num">5</span>; <span class="cmt">-- 変わってたら0行</span>
+<span class="cmt">-- 0行 → 他が更新済み → リトライ</span></pre>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">✓ ロックしないので性能が高い<br>✗ 衝突時はアプリ側でリトライが必要</p>
+    </div>
+  </div>
+
+  <table style="margin-top:16px">
+    <tr><th>観点</th><th>悲観ロック</th><th>楽観ロック</th></tr>
+    <tr><td>向いているケース</td><td>衝突が頻繁、金融系など整合性最優先</td><td>衝突が稀、読み取り多め、性能優先</td></tr>
+    <tr><td>実装場所</td><td>DB（FOR UPDATE）</td><td>アプリ側（versionチェック）</td></tr>
+    <tr><td>待機</td><td>ロック解放まで待機する</td><td>待機なし（衝突したらリトライ）</td></tr>
+  </table>
+</section>
+
+<!-- ===== デッドロック ===== -->
+<section>
+  <h2 class="red">デッドロック — お互いが待ち続ける状態</h2>
+  <p>2つのトランザクションがお互いに相手のロックを待ち続けて、永遠に進めなくなる状態。</p>
+
+  <h3>デッドロックが起きるパターン</h3>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-time tl-header">時刻</div>
+      <div class="tl-a tl-header">トランザクションA</div>
+      <div class="tl-b tl-header">トランザクションB</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T1</div>
+      <div class="tl-a act">BEGIN<br>accounts id=1 をFOR UPDATE（ロック取得）</div>
+      <div class="tl-b act">BEGIN<br>accounts id=2 をFOR UPDATE（ロック取得）</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T2</div>
+      <div class="tl-a wait">accounts id=2 をFOR UPDATE しようとする<br>→ Bがロック中なので待機...</div>
+      <div class="tl-b wait">accounts id=1 をFOR UPDATE しようとする<br>→ Aがロック中なので待機...</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">T3</div>
+      <div class="tl-a err">DBがデッドロックを検出してAをROLLBACK</div>
+      <div class="tl-b ok">Bのロックが解放されて処理続行</div>
+    </div>
+  </div>
+
+  <pre><span class="cmt">-- デッドロックを引き起こすコード例</span>
+<span class="cmt">-- トランザクションA: id=1 → id=2 の順でロック</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">FOR UPDATE</span>;
+<span class="cmt">-- (ここで少し処理)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">2</span> <span class="kw">FOR UPDATE</span>; <span class="cmt">-- Bを待機</span>
+
+<span class="cmt">-- トランザクションB: id=2 → id=1 の順でロック（逆順！）</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">2</span> <span class="kw">FOR UPDATE</span>;
+<span class="cmt">-- (ここで少し処理)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">FOR UPDATE</span>; <span class="cmt">-- Aを待機 → デッドロック</span></pre>
+
+  <h3>デッドロックの回避策</h3>
+  <table>
+    <tr><th>対策</th><th>内容</th><th>効果</th></tr>
+    <tr><td>ロック取得順序を統一する</td><td>常に id の小さい順（id=1→id=2）でロックを取得するようにコードを統一する</td><td>最も効果的。根本的に解決できる</td></tr>
+    <tr><td>トランザクションを短くする</td><td>ロックを保持する時間を最小限にする。SELECT FOR UPDATE → すぐUPDATE → すぐCOMMIT</td><td>デッドロックの確率を下げる</td></tr>
+    <tr><td>ロックタイムアウトを設定する</td><td>一定時間待ってもロックが取れなければエラーにする</td><td>無限待機を防ぐ（根本解決ではない）</td></tr>
+    <tr><td>アプリ側でリトライする</td><td>デッドロックエラーを検知したら処理をリトライする</td><td>ユーザー体験を損なわない（根本解決ではない）</td></tr>
+  </table>
+
+  <pre><span class="cmt">-- デッドロック回避: ロック取得順序を統一する</span>
+<span class="cmt">-- AもBも「小さいidから順に」ロックを取る</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span>
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="num">1</span>, <span class="num">2</span>)
+<span class="kw">ORDER BY</span> id  <span class="cmt">-- 必ず昇順で</span>
+<span class="kw">FOR UPDATE</span>;  <span class="cmt">-- id=1 → id=2 の順でロックされる</span>
+
+<span class="cmt">-- ロックタイムアウトの設定（MySQL）</span>
+<span class="kw">SET</span> innodb_lock_wait_timeout = <span class="num">5</span>; <span class="cmt">-- 5秒待ってもロックが取れなければエラー</span></pre>
+
+  <div class="warn"><strong>⚠ デッドロックはDBが自動検出してROLLBACKする</strong>
+デッドロックが発生すると、DBはどちらかのトランザクションを強制的にROLLBACKしてエラーを返す。アプリ側でこのエラーを適切にハンドリングしてリトライする実装が必要。</div>
+</section>
+
+<!-- ===== MVCC ===== -->
+<section>
+  <h2 class="green">MVCC — ロックなしで読み取りを速くする仕組み</h2>
+  <p><strong>MVCC（Multi Version Concurrency Control）</strong> = 多版型同時実行制御。データの複数のバージョンを保持することで、読み取りと書き込みがお互いをブロックしない仕組み。</p>
+
+  <div class="er-wrap">
+    <svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg" width="780" style="max-width:100%">
+      <text x="10" y="18" fill="#64748b" font-size="12" font-weight="700">MVCCなし: 読み取りが書き込みを待つ</text>
+      <rect x="10" y="28" width="140" height="36" rx="4" fill="#1a1e2e" stroke="#ff6b6b"/>
+      <text x="80" y="51" text-anchor="middle" fill="#ff6b6b" font-size="12">書き込み中（ロック）</text>
+      <rect x="160" y="28" width="140" height="36" rx="4" fill="#1a1e2e" stroke="#64748b" stroke-dasharray="4,2"/>
+      <text x="230" y="51" text-anchor="middle" fill="#64748b" font-size="12">読み取り 待機中...</text>
+      <text x="310" y="51" fill="#64748b" font-size="16">→</text>
+      <rect x="330" y="28" width="140" height="36" rx="4" fill="#1a1e2e" stroke="#4ade80"/>
+      <text x="400" y="51" text-anchor="middle" fill="#4ade80" font-size="12">ロック解放後に読める</text>
+
+      <text x="10" y="110" fill="#64748b" font-size="12" font-weight="700">MVCCあり: 読み取りは古いバージョンを見る（待機なし）</text>
+      <rect x="10" y="120" width="140" height="36" rx="4" fill="#1a1e2e" stroke="#4f9eff"/>
+      <text x="80" y="143" text-anchor="middle" fill="#4f9eff" font-size="12">書き込み中（新バージョン）</text>
+      <rect x="160" y="120" width="180" height="36" rx="4" fill="#1a1e2e" stroke="#4ade80"/>
+      <text x="250" y="143" text-anchor="middle" fill="#4ade80" font-size="12">読み取り → 古いバージョンを即返す</text>
+      <text x="350" y="143" fill="#4ade80" font-size="20">✓</text>
+      <text x="370" y="143" fill="#4ade80" font-size="12">待機なし</text>
+
+      <text x="10" y="185" fill="#64748b" font-size="12">MySQLのREPEATABLE READはMVCCにより「トランザクション開始時点のスナップショット」を読む。これがファントムリードも防げる理由。</text>
+    </svg>
+  </div>
+
+  <div class="tip">InnoDB（MySQL）とPostgreSQLはどちらもMVCCを実装している。「SELECT（読み取り）がUPDATE（書き込み）をブロックしない」のはMVCCのおかげ。<span class="db-note">DB固有</span></div>
+
+  <h3>レコードが増え続けないのか</h3>
+  <p>増えるが、無限には増えない。不要になった古いバージョンは自動的に削除される。</p>
+  <table>
+    <tr><th>DB</th><th>古いバージョンの管理方法</th></tr>
+    <tr><td>MySQL（InnoDB）</td><td>undo log という別領域に古いバージョンを保持する。参照しているトランザクションがなくなると自動削除される</td></tr>
+    <tr><td>PostgreSQL</td><td>テーブル内にそのまま古い行が残る。VACUUM（バキューム）という処理が定期的に不要行を回収する。autovacuumが自動で実行する</td></tr>
+  </table>
+
+  <h3>古い情報を読んでしまわないか</h3>
+  <p>意図的に古い情報を返す。REPEATABLE READは「トランザクション開始時点の情報を一貫して返す」のが目的なので、他がCOMMITしても自分の見えるデータは変わらない。これが正しい動作。</p>
+  <p>「今の最新値を読みたい」場合はどうするか：</p>
+  <table>
+    <tr><th>方法</th><th>内容</th></tr>
+    <tr><td>READ COMMITTEDに変更する</td><td>SELECTするたびに最新のCOMMIT済みデータを返す</td></tr>
+    <tr><td>FOR UPDATEをかける</td><td>REPEATABLE READでも、FOR UPDATEを使うと最新値を取得できる</td></tr>
+  </table>
+  <p>用途によって使い分ける。ほとんどのWebアプリはREPEATABLE READ（デフォルト）のままで問題ない。</p>
+</section>
+
+<!-- ===== よくある実装パターン ===== -->
+<section>
+  <h2 class="yellow">実務でよくある実装パターン</h2>
+
+  <h3>在庫の二重販売を防ぐ（悲観ロック）</h3>
+  <p style="font-size:13px;margin-bottom:8px"><strong>FOR UPDATEがない場合に何が起きるか：</strong><br>
+  AとBが同時にstock=1を読む → 両方「在庫あり」と判断 → 両方UPDATEを実行 → 在庫が-1になる（二重販売）</p>
+  <p style="font-size:13px;margin-bottom:8px"><strong>FOR UPDATEがある場合：</strong><br>
+  AがFOR UPDATEでロックを取得 → Bは待機 → AがUPDATE（stock=0）してCOMMIT → ロック解放 → Bがstock=0を読む → 「在庫なし」として処理を中断</p>
+  <pre><span class="kw">BEGIN</span>;
+
+<span class="cmt">-- 在庫を確認しながらロックをかける</span>
+<span class="kw">SELECT</span> stock
+<span class="kw">FROM</span>  <span class="tbl">products</span>
+<span class="kw">WHERE</span> id = <span class="num">101</span>
+<span class="kw">FOR UPDATE</span>;  <span class="cmt">-- このレコードをロック。他のトランザクションはここで待機する</span>
+
+<span class="cmt">-- アプリ側で stock > 0 を確認してからUPDATE</span>
+<span class="kw">UPDATE</span> <span class="tbl">products</span>
+<span class="kw">SET</span>   stock = stock - <span class="num">1</span>
+<span class="kw">WHERE</span> id    = <span class="num">101</span>
+  <span class="kw">AND</span> stock > <span class="num">0</span>;  <span class="cmt">-- 念のためWHEREでも確認（0行なら在庫なし）</span>
+
+<span class="kw">COMMIT</span>;  <span class="cmt">-- ここでロック解放。待機していたBが処理を再開する</span></pre>
+
+  <h3>ポイント付与の重複防止（楽観ロック）</h3>
+  <pre><span class="cmt">-- ポイントテーブルにversion列を持たせる</span>
+<span class="kw">SELECT</span> id, points, version
+<span class="kw">FROM</span>  <span class="tbl">user_points</span>
+<span class="kw">WHERE</span> user_id = <span class="num">1</span>;
+<span class="cmt">-- points=1000, version=3 を取得</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">user_points</span>
+<span class="kw">SET</span>
+    points  = <span class="num">1100</span>,       <span class="cmt">-- 1000 + 100ポイント付与</span>
+    version = <span class="num">4</span>           <span class="cmt">-- version をインクリメント</span>
+<span class="kw">WHERE</span> user_id = <span class="num">1</span>
+  <span class="kw">AND</span> version  = <span class="num">3</span>;       <span class="cmt">-- 取得時と同じversionかチェック</span>
+<span class="cmt">-- affected_rows=0 なら他のリクエストが先に更新済み → リトライ</span></pre>
+
+  <p style="font-size:13px;margin-top:4px"><strong>具体的に何が起きているか：</strong></p>
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:8px 0;font-size:13px;line-height:1.9">
+    AとBが同時にversion=3のレコードを取得<br>
+    → A が先に UPDATE（version=3→4）して成功<br>
+    → B が UPDATE しようとするが WHERE version=3 にマッチする行がもうない → 0行<br>
+    → B は affected_rows=0 を検知してリトライ<br>
+    → B が再度SELECT → version=4 を取得<br>
+    → B が WHERE version=4 で UPDATE → 成功（version=4→5）<br>
+    <br>
+    結果：AとBの更新が両方正しく反映される。楽観ロックなしだと両方がversion=3で更新してどちらかが上書きされる。
+  </div>
+
+  <h3>長時間のトランザクションを避ける</h3>
+  <pre><span class="cmt">-- NG: 外部API呼び出しをトランザクション内に入れてしまう</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> status = <span class="str">'processing'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="cmt">-- 外部決済APIを呼ぶ（数秒かかることもある）</span>
+<span class="cmt">-- この間ずっとロックを保持してしまう</span>
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> status = <span class="str">'paid'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>;
+
+<span class="cmt">-- OK: 外部API呼び出しはトランザクションの外で行う</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> status = <span class="str">'processing'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>;  <span class="cmt">-- 一旦確定してロックを解放</span>
+
+<span class="cmt">-- 外部決済APIを呼ぶ（トランザクション外）</span>
+
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> status = <span class="str">'paid'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>;</pre>
+
+  <div class="warn"><strong>⚠ トランザクションを長くするとロックが増えて他の処理がブロックされる</strong>
+「BEGIN してから COMMIT まで」の時間が長いほど、その間ロックが保持されて他のトランザクションが待機する。外部API・重い計算・ファイル操作などはトランザクションの外に出す。</div>
+</section>
+
+<!-- ===== チェックリスト ===== -->
+<section>
+  <h2 class="gray">実務チェックリスト</h2>
+  <table>
+    <tr><th>確認項目</th><th>NG例 / 確認方法</th></tr>
+    <tr><td>複数テーブルを更新するとき、トランザクションで囲んでいるか</td><td>片方だけ成功して片方が失敗しても気づかない状態になっていないか</td></tr>
+    <tr><td>FOR UPDATE をかけた後すぐにCOMMITしているか</td><td>ロック保持時間が長くなっていないか</td></tr>
+    <tr><td>ロックの取得順序が複数箇所で統一されているか</td><td>id=1→id=2 の順とid=2→id=1 の順が混在していないか</td></tr>
+    <tr><td>デッドロックエラーのハンドリングがあるか</td><td>エラー発生時にリトライ処理が入っているか</td></tr>
+    <tr><td>楽観ロックのversionチェック後、affected_rowsを確認しているか</td><td>0行のとき（衝突時）のリトライ処理が入っているか</td></tr>
+    <tr><td>外部API・重い処理をトランザクション内に入れていないか</td><td>BEGIN〜COMMITの間に時間のかかる処理が入っていないか</td></tr>
+    <tr><td>ROLLBACKが必要なケースをすべてハンドリングしているか</td><td>エラー時にROLLBACKせずCONNECTIONが切れて中途半端な状態にならないか</td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>
