@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeScript 完全ガイド — 基礎から実務まで</title>
+<style>
+:root {
+  --bg:#f4f6fb; --surface:#fff; --surface2:#f0f2f7; --border:#dde2ef;
+  --text:#1a1f36; --muted:#64748b;
+  --ts:#3178c6; --ts-light:rgba(49,120,198,.1); --ts-border:rgba(49,120,198,.3);
+  --green:#16a34a; --green-light:rgba(22,163,74,.08); --green-border:rgba(22,163,74,.3);
+  --red:#dc2626; --red-light:rgba(220,38,38,.08); --red-border:rgba(220,38,38,.3);
+  --yellow:#d97706; --yellow-light:rgba(217,119,6,.08); --yellow-border:rgba(217,119,6,.3);
+  --purple:#7c3aed; --purple-light:rgba(124,58,237,.08);
+  --code-bg:#0a0c14; --code-border:#1e2235;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.8;}
+
+/* ヘッダー */
+.site-header{background:var(--ts);color:#fff;padding:36px 24px 28px;text-align:center;}
+.site-header h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;}
+.site-header p{font-size:13px;opacity:.8;}
+.header-badges{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;}
+
+/* レイアウト */
+.layout{display:grid;grid-template-columns:230px 1fr;max-width:1160px;margin:0 auto;padding:0 16px;align-items:start;}
+
+/* サイドバーTOC */
+.toc{position:sticky;top:16px;padding:20px 0;max-height:calc(100vh - 32px);overflow-y:auto;}
+.toc>details{margin-bottom:4px;}
+.toc>details>summary{list-style:none;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ts);padding:8px 4px 4px;user-select:none;}
+.toc>details>summary::-webkit-details-marker{display:none;}
+.toc-links{display:flex;flex-direction:column;}
+.toc a{display:block;padding:4px 10px;font-size:12.5px;color:var(--muted);text-decoration:none;border-radius:5px;border-left:2px solid transparent;transition:all .12s;}
+.toc a:hover{background:var(--surface);color:var(--ts);border-left-color:var(--ts);}
+
+/* メインコンテンツ */
+.main{padding:24px 0 80px 28px;min-width:0;}
+
+/* セクション */
+section{margin-bottom:12px;}
+details.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+details.sec>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:10px;user-select:none;}
+details.sec>summary::-webkit-details-marker{display:none;}
+details.sec>summary::before{content:'▶';font-size:9px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+details.sec[open]>summary::before{transform:rotate(90deg);}
+.s-icon{font-size:18px;flex-shrink:0;}
+.s-title{font-size:15px;font-weight:700;flex:1;}
+.s-desc{font-size:12px;color:var(--muted);}
+.sec-body{padding:4px 24px 28px;border-top:1px solid var(--border);}
+
+/* 見出し */
+.part-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ts);margin:28px 0 8px;padding-left:2px;}
+h3{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px;}
+p{margin-bottom:12px;line-height:1.85;}
+strong{font-weight:700;}
+
+/* コードブロック */
+pre{background:var(--code-bg);border:1px solid var(--code-border);border-radius:8px;padding:16px 18px;overflow-x:auto;font-family:'Fira Code','JetBrains Mono','Courier New',monospace;font-size:13px;line-height:1.9;color:#e2e8f0;margin:8px 0 14px;}
+code{font-family:'Fira Code','JetBrains Mono',monospace;font-size:12.5px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--ts);border:1px solid var(--border);}
+/* シンタックス */
+.kw{color:#61b8ff;font-weight:600;} .str{color:#4ade80;} .num{color:#fbbf24;}
+.cmt{color:#4b5568;font-style:italic;} .type{color:#a78bfa;font-weight:600;}
+.fn{color:#e2c07a;} .op{color:#94a3b8;} .err{color:#f87171;}
+.php-kw{color:#c084fc;font-weight:600;}
+
+/* カードグリッド */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+.cards.c2{grid-template-columns:repeat(2,1fr);}
+.cards.c4{grid-template-columns:repeat(4,1fr);}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;}
+.card-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.card-value{font-family:'Fira Code',monospace;font-size:14px;font-weight:700;color:var(--ts);margin-bottom:3px;}
+.card-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.card.ts{border-left:3px solid var(--ts);}
+.card.green{border-left:3px solid var(--green);}
+.card.red{border-left:3px solid var(--red);}
+.card.purple{border-left:3px solid var(--purple);}
+.card.yellow{border-left:3px solid var(--yellow);}
+
+/* NG/OK比較 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;}
+.cbox{border-radius:8px;overflow:hidden;}
+.cbox-title{padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.4px;}
+.cbox.bad .cbox-title{background:var(--red-light);color:var(--red);border:1px solid var(--red-border);border-bottom:none;}
+.cbox.good .cbox-title{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);border-bottom:none;}
+.cbox pre{border-radius:0 0 8px 8px;margin:0;font-size:12px;}
+.cbox.bad pre{border-color:var(--red-border);}
+.cbox.good pre{border-color:var(--green-border);}
+
+/* PHP/TS並べ */
+.lang-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;}
+.lbox{border-radius:8px;overflow:hidden;}
+.lbox-title{padding:6px 14px;font-size:11px;font-weight:700;}
+.lbox.php .lbox-title{background:rgba(139,92,246,.1);color:#8b5cf6;border:1px solid rgba(139,92,246,.3);border-bottom:none;}
+.lbox.ts .lbox-title{background:var(--ts-light);color:var(--ts);border:1px solid var(--ts-border);border-bottom:none;}
+.lbox pre{border-radius:0 0 8px 8px;margin:0;font-size:12px;}
+.lbox.php pre{border-color:rgba(139,92,246,.3);}
+.lbox.ts pre{border-color:var(--ts-border);}
+
+/* アラート */
+.warn{background:var(--yellow-light);border:1px solid var(--yellow-border);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13.5px;line-height:1.8;}
+.warn strong{color:var(--yellow);display:block;margin-bottom:3px;}
+.tip{background:var(--ts-light);border:1px solid var(--ts-border);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13.5px;color:#1e40af;line-height:1.8;}
+.tip::before{content:"💡 ";}
+.info{background:var(--purple-light);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13.5px;color:var(--purple);line-height:1.8;}
+
+/* テーブル */
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+th{background:var(--surface2);color:var(--muted);font-weight:700;padding:8px 13px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:nth-child(even) td{background:rgba(0,0,0,.015);}
+
+/* レベルグリッド */
+.level-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
+.lv-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.lv-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;}
+.lv1 .lv-badge{background:#dcfce7;color:#16a34a;}
+.lv2 .lv-badge{background:#dbeafe;color:#2563eb;}
+.lv3 .lv-badge{background:#fef9c3;color:#ca8a04;}
+.lv4 .lv-badge{background:#f3e8ff;color:#7c3aed;}
+.lv-card h4{font-size:13px;font-weight:700;margin-bottom:6px;}
+.lv-card ul{padding-left:14px;font-size:12px;color:var(--muted);line-height:2;}
+.checklist{list-style:none;padding:0;margin:10px 0;}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--border);}
+.checklist li:last-child{border-bottom:none;}
+.ch{color:var(--green);flex-shrink:0;font-size:15px;}
+
+/* フィーチャーリスト（縦リスト型） */
+.flist{list-style:none;padding:0;margin:12px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.flist li{display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--surface);}
+.flist li:last-child{border-bottom:none;}
+.flist li:hover{background:var(--surface2);}
+.flist-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.flist-body{min-width:0;}
+.flist-label{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.flist-title{font-size:14px;font-weight:700;color:var(--ts);margin-bottom:2px;}
+.flist-desc{font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+/* SVG */
+.svg-wrap{margin:14px 0;overflow-x:auto;}
+
+/* レスポンシブ */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;}
+  .toc{display:none;}
+  .main{padding:16px 0;}
+  .cards{grid-template-columns:1fr 1fr;}
+  .cards.c4{grid-template-columns:1fr 1fr;}
+  .compare,.lang-compare{grid-template-columns:1fr;}
+  .level-grid{grid-template-columns:1fr 1fr;}
+}
+
+  /* セクションヘッダー（details解除後） */
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 10px;
+    border-bottom: 2px solid #e2e6f0;
+    margin-bottom: 18px;
+  }
+  .sec-header .s-icon { font-size: 22px; }
+  .sec-header .s-title { font-size: 18px; font-weight: 700; color: #1a2340; }
+  .sec-header .s-desc { font-size: 13px; color: #7a85a3; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <h1>TypeScript 完全ガイド</h1>
+  <p>基礎から実務まで — Vue / React / PHPバックエンド連携まで一冊で</p>
+  <div class="header-badges">
+    <span class="badge">TypeScript 5.x</span>
+    <span class="badge">実務レベル対応</span>
+    <span class="badge">Vue 3 / React 対応</span>
+    <span class="badge">PHP経験者向け解説あり</span>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- ===== TOC ===== -->
+<nav class="toc">
+  <details open>
+    <div class="sec-header">Part 1 — 基礎</div>
+    <div class="toc-links">
+      <a href="#s01">01 TypeScriptとは</a>
+      <a href="#s02">02 基本の型</a>
+      <a href="#s03">03 型推論</a>
+      <a href="#s04">04 null / undefined</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 2 — 型の構造</div>
+    <div class="toc-links">
+      <a href="#s05">05 interface vs type</a>
+      <a href="#s06">06 Union / Intersection / リテラル</a>
+      <a href="#s07">07 配列・タプル・as const</a>
+      <a href="#s08">08 関数の型</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 3 — 型の力</div>
+    <div class="toc-links">
+      <a href="#s09">09 ジェネリクス</a>
+      <a href="#s10">10 ユーティリティ型</a>
+      <a href="#s11">11 型ガード・絞り込み</a>
+      <a href="#s12">12 高度な型</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 4 — 実践基盤</div>
+    <div class="toc-links">
+      <a href="#s13">13 クラス</a>
+      <a href="#s14">14 モジュール</a>
+      <a href="#s15">15 tsconfig 詳解</a>
+      <a href="#s16">16 ツール・環境構築</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 5 — フレームワーク連携</div>
+    <div class="toc-links">
+      <a href="#s17">17 実務パターン</a>
+      <a href="#s18">18 Vue 3 + TypeScript</a>
+      <a href="#s19">19 React + TypeScript</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 6 — バックエンド連携</div>
+    <div class="toc-links">
+      <a href="#s20">20 PHP経験者向け対応表</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 7 — レベルガイド</div>
+    <div class="toc-links">
+      <a href="#s21">21 どこまでできれば言える？</a>
+    </div>
+  </details>
+  <details open>
+    <div class="sec-header">Part 8 — 演習・実践</div>
+    <div class="toc-links">
+      <a href="#s22">22 演習問題 &amp; プロジェクト案</a>
+    </div>
+  </details>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+<!-- ===== PART 1: 基礎 ===== -->
+<p class="part-label">Part 1 — 基礎</p>
+
+<!-- S01 TypeScriptとは -->
+<section id="s01">
+<div class="sec-header"><span class="s-icon">🔷</span><span class="s-title">01 TypeScriptとは</span><span class="s-desc">なぜ型が必要か</span></div>
+
+<p>TypeScript（TS）はMicrosoftが開発した、JavaScriptに<strong>静的型付け</strong>を追加した言語。書いたコードはブラウザ実行前にJavaScriptへ変換（トランスパイル）される。</p>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 640 90" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;font-family:sans-serif;">
+  <rect x="10" y="20" width="120" height="50" rx="8" fill="#3178c620" stroke="#3178c6" stroke-width="1.5"/>
+  <text x="70" y="50" text-anchor="middle" font-size="13" fill="#3178c6" font-weight="700">.ts ファイル</text>
+  <text x="70" y="65" text-anchor="middle" font-size="10" fill="#64748b">TypeScript</text>
+  <text x="158" y="48" font-size="18" fill="#64748b">→</text>
+  <rect x="180" y="20" width="160" height="50" rx="8" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5"/>
+  <text x="260" y="45" text-anchor="middle" font-size="12" fill="#0369a1" font-weight="700">tsc / Vite / esbuild</text>
+  <text x="260" y="61" text-anchor="middle" font-size="10" fill="#64748b">型チェック → トランスパイル</text>
+  <text x="358" y="48" font-size="18" fill="#64748b">→</text>
+  <rect x="380" y="20" width="120" height="50" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="440" y="50" text-anchor="middle" font-size="13" fill="#92400e" font-weight="700">.js ファイル</text>
+  <text x="440" y="65" text-anchor="middle" font-size="10" fill="#64748b">ブラウザ実行</text>
+  <text x="518" y="48" font-size="18" fill="#64748b">→</text>
+  <rect x="540" y="20" width="88" height="50" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="584" y="50" text-anchor="middle" font-size="12" fill="#166534" font-weight="700">動作する</text>
+</svg>
+</div>
+
+<h3>JSとTSの最大の違い</h3>
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ JavaScript — 実行するまでエラーに気づかない</div>
+  <pre><span class="kw">function</span> <span class="fn">double</span>(n) {
+  <span class="kw">return</span> n * <span class="num">2</span>
+}
+<span class="fn">double</span>(<span class="str">'hello'</span>)  <span class="cmt">// NaN になるが書いた時点では気づかない</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ TypeScript — 書いた瞬間にエラーがわかる</div>
+  <pre><span class="kw">function</span> <span class="fn">double</span>(n: <span class="type">number</span>): <span class="type">number</span> {
+  <span class="kw">return</span> n * <span class="num">2</span>
+}
+<span class="fn">double</span>(<span class="str">'hello'</span>)
+<span class="cmt">// エラー: string は number に代入できない</span></pre>
+</div>
+</div>
+
+<h3>TypeScriptでできること</h3>
+<ul class="flist">
+  <li><span class="flist-icon">🔍</span><div class="flist-body"><div class="flist-label">型チェック</div><div class="flist-title">コンパイル時エラー検出</div><div class="flist-desc">実行前にバグを発見。VSCodeがリアルタイムでエラーを教えてくれる。「実行してみたら壊れた」がなくなる</div></div></li>
+  <li><span class="flist-icon">⚡</span><div class="flist-body"><div class="flist-label">補完・リファクタ</div><div class="flist-title">IDE支援が爆発的に強くなる</div><div class="flist-desc">プロパティ名の補完・関数の引数ヒント・リネームが安全にできる。タイポが即座にわかる</div></div></li>
+  <li><span class="flist-icon">📖</span><div class="flist-body"><div class="flist-label">ドキュメント化</div><div class="flist-title">型がそのままドキュメントになる</div><div class="flist-desc">関数の型定義を見るだけで「何を渡して何が返るか」がわかる。コメントを書かなくていい</div></div></li>
+</ul>
+
+<div class="tip">JavaScriptはそのままTypeScriptとして動く。既存のJSファイルを<code>.ts</code>に変えるだけで始められる。</div>
+
+</section>
+
+<!-- S02 基本の型 -->
+<section id="s02">
+<div class="sec-header"><span class="s-icon">🧱</span><span class="s-title">02 基本の型</span><span class="s-desc">プリミティブ・any・unknown・never</span></div>
+
+<p>TypeScriptのすべての値はいずれかの「型」に属する。まず最も基本的なプリミティブ型（値そのもの）を把握しよう。</p>
+
+<h3>プリミティブ型一覧</h3>
+<div class="cards c2">
+  <div class="card ts"><div class="card-label">string</div><div class="card-value">'山田' / "hello" / `${name}`</div><div class="card-desc">文字列。シングル・ダブルクォート・テンプレートリテラル（バッククォート）すべて同じ型</div></div>
+  <div class="card ts"><div class="card-label">number</div><div class="card-value">32 / 1980.5 / 0xff</div><div class="card-desc">整数・小数・16進数すべてが<code>number</code>一種類。PHPのint/floatの区別はない</div></div>
+  <div class="card ts"><div class="card-label">boolean</div><div class="card-value">true / false</div><div class="card-desc"><code>true</code>/<code>false</code>のみ。<code>0</code>・<code>null</code>・<code>""</code>はbooleanではないので型エラーになる</div></div>
+  <div class="card ts"><div class="card-label">null</div><div class="card-value">null</div><div class="card-desc">「意図的に値がない」状態。APIが「データなし」を返すときなど、明示的にセットする値</div></div>
+  <div class="card ts"><div class="card-label">undefined</div><div class="card-value">undefined</div><div class="card-desc">「まだ値がない・セットされていない」状態。オプショナルなプロパティのデフォルト値</div></div>
+  <div class="card purple"><div class="card-label">bigint</div><div class="card-value">9007199254740992n</div><div class="card-desc"><code>number</code>の安全な上限（2<sup>53</sup>-1）を超える整数。末尾に<code>n</code>を付ける。IDや金額の大きな数値に使う</div></div>
+  <div class="card purple"><div class="card-label">symbol</div><div class="card-value">Symbol('key')</div><div class="card-desc">一意の値。同じ文字列を渡しても別のSymbol。Mapのキーやプロトコルの識別子などに使う。実務での使用頻度は低い</div></div>
+</div>
+
+<pre><span class="cmt">// 型注釈の書き方（: のあとに型名）</span>
+<span class="kw">const</span> name:    <span class="type">string</span>    = <span class="str">'山田太郎'</span>
+<span class="kw">const</span> age:     <span class="type">number</span>    = <span class="num">32</span>
+<span class="kw">const</span> active:  <span class="type">boolean</span>   = <span class="kw">true</span>
+<span class="kw">const</span> score:   <span class="type">number</span>    = <span class="num">98.5</span>    <span class="cmt">// 小数もnumber（PHPのfloatに相当）</span>
+
+<span class="cmt">// null と undefined は別物</span>
+<span class="kw">let</span> selected: <span class="type">string</span> | <span class="type">null</span>      = <span class="kw">null</span>       <span class="cmt">// APIから「選択なし」が返ってくる想定</span>
+<span class="kw">let</span> loaded:   <span class="type">string</span> | <span class="type">undefined</span> = <span class="kw">undefined</span>  <span class="cmt">// まだフェッチしていない状態</span></pre>
+
+<h3>number の落とし穴 — 精度に注意</h3>
+<p>JavaScriptの<code>number</code>はIEEE 754の浮動小数点数。整数の計算では基本的に問題ないが、小数の演算は誤差が出る。金額・税率の計算をそのまま<code>number</code>でやると壊れることがある。</p>
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ 小数の加算でずれる</div>
+  <pre><span class="cmt">// これはJavaScript/TypeScript共通の問題</span>
+<span class="num">0.1</span> + <span class="num">0.2</span>  <span class="cmt">// → 0.30000000000000004</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ 整数で扱うか、専用ライブラリを使う</div>
+  <pre><span class="cmt">// 金額は「円」単位（整数）で持つ</span>
+<span class="kw">const</span> price: <span class="type">number</span> = <span class="num">1980</span>  <span class="cmt">// 円（整数）</span>
+<span class="cmt">// または decimal.js などを使う</span></pre>
+</div>
+</div>
+
+<h3>null vs undefined — 使い分けの基準</h3>
+<p>TypeScriptでは<code>null</code>と<code>undefined</code>は別の型として扱われる（<code>strictNullChecks: true</code>時）。どちらを使うかはプロジェクトの慣習による部分もあるが、意味に違いがある。</p>
+<table>
+  <tr><th>値</th><th>意味</th><th>使いどころ</th></tr>
+  <tr><td><code>null</code></td><td>意図的に「値なし」をセット</td><td>APIレスポンスの「データなし」・初期化後に空にした状態</td></tr>
+  <tr><td><code>undefined</code></td><td>まだ値が設定されていない</td><td>オプショナルプロパティ（<code>?</code>）のデフォルト・まだフェッチしていない状態</td></tr>
+</table>
+
+<h3>特殊な型（重要）</h3>
+<div class="cards">
+  <div class="card red"><div class="card-label">any</div><div class="card-value">型チェックを無効化</div><div class="card-desc">何でも入る。TypeScriptをJSと同じにする。<strong>基本的に使わない</strong>。型がわからないときは<code>unknown</code>を使う</div></div>
+  <div class="card green"><div class="card-label">unknown</div><div class="card-value">安全なany</div><div class="card-desc">何でも受け取れるが、使う前に型チェックが必須。外部からの入力・JSONのparse結果など「型が保証できない値」に使う</div></div>
+  <div class="card purple"><div class="card-label">never</div><div class="card-value">絶対に到達しない</div><div class="card-desc">例外のみスローする関数の戻り値・Union型の網羅チェックのケース漏れ検出に使う。「ここには絶対来ない」という証明</div></div>
+  <div class="card ts"><div class="card-label">void</div><div class="card-value">戻り値なし</div><div class="card-desc"><code>console.log</code>のような「値を返さない関数」の戻り値型。関数の引数で「戻り値を使わないコールバック」にも使う</div></div>
+</div>
+
+<pre><span class="cmt">// never の使いどころ — Union型の網羅チェック</span>
+<span class="kw">type</span> <span class="type">Status</span> = <span class="str">'active'</span> | <span class="str">'inactive'</span> | <span class="str">'banned'</span>
+
+<span class="kw">function</span> <span class="fn">handle</span>(s: <span class="type">Status</span>) {
+  <span class="kw">switch</span> (s) {
+    <span class="kw">case</span> <span class="str">'active'</span>:   <span class="kw">return</span> <span class="str">'アクティブ'</span>
+    <span class="kw">case</span> <span class="str">'inactive'</span>: <span class="kw">return</span> <span class="str">'非アクティブ'</span>
+    <span class="kw">case</span> <span class="str">'banned'</span>:   <span class="kw">return</span> <span class="str">'BANされた'</span>
+    <span class="kw">default</span>:
+      <span class="kw">const</span> _: <span class="type">never</span> = s  <span class="cmt">// Status に新しいケースを追加したらここでエラー</span>
+  }
+}</pre>
+
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ any — 型チェックが死ぬ</div>
+  <pre><span class="kw">let</span> value: <span class="type">any</span> = <span class="str">'hello'</span>
+value = <span class="num">42</span>        <span class="cmt">// OK（何でも代入できる）</span>
+value.toFixed()   <span class="cmt">// 実行時エラーになっても気づかない</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ unknown — 使う前にチェックが強制される</div>
+  <pre><span class="kw">let</span> value: <span class="type">unknown</span> = <span class="str">'hello'</span>
+<span class="kw">if</span> (<span class="kw">typeof</span> value === <span class="str">'string'</span>) {
+  value.toUpperCase() <span class="cmt">// OK（string確定後）</span>
+}</pre>
+</div>
+</div>
+
+<div class="warn"><strong>⚠️ anyを書いたらTypeScriptの意味がない</strong>「型わからん → any」ではなく「型わからん → unknown で受けて絞り込む」が正解。anyはどうしても型が付けられない移行期のコードにのみ使い、コメントで理由を書くこと。</div>
+
+</section>
+
+<!-- S03 型推論 -->
+<section id="s03">
+<div class="sec-header"><span class="s-icon">🔍</span><span class="s-title">03 型推論</span><span class="s-desc">TypeScriptが自動で型を決める仕組み</span></div>
+
+<p>TypeScriptは多くの場合、初期値から型を自動で判定する。毎回書かなくていい。</p>
+
+<pre><span class="cmt">// 書かなくても型が決まる（推論される）</span>
+<span class="kw">const</span> name = <span class="str">'山田'</span>      <span class="cmt">// 推論: string</span>
+<span class="kw">const</span> age  = <span class="num">32</span>         <span class="cmt">// 推論: number</span>
+<span class="kw">const</span> flag = <span class="kw">true</span>       <span class="cmt">// 推論: boolean</span>
+<span class="kw">const</span> nums = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]  <span class="cmt">// 推論: number[]</span>
+
+<span class="cmt">// ⚠️ const vs let — リテラル型の違い（重要）</span>
+<span class="kw">const</span> dir1 = <span class="str">'left'</span>  <span class="cmt">// 推論: "left"（リテラル型 — const は変更不可なので具体値で推論）</span>
+<span class="kw">let</span>   dir2 = <span class="str">'left'</span>  <span class="cmt">// 推論: string（let は別の値に変わりうるので広い型）</span>
+<span class="cmt">// → as const・型ガードを理解するうえで必須の挙動。S07 で詳しく扱う</span>
+
+<span class="cmt">// 関数の戻り値も推論される</span>
+<span class="kw">function</span> <span class="fn">add</span>(a: <span class="type">number</span>, b: <span class="type">number</span>) {
+  <span class="kw">return</span> a + b  <span class="cmt">// 戻り値型は自動でnumberになる</span>
+}</pre>
+
+<h3>型を明示すべき場面 vs 省略できる場面</h3>
+<table>
+  <tr><th>場面</th><th>判断</th><th>理由</th></tr>
+  <tr><td>変数の初期化（値あり）</td><td>✅ 省略OK</td><td>値から推論される</td></tr>
+  <tr><td>関数の引数</td><td>📝 明示する</td><td>呼び出し側が間違えたとき検出できる</td></tr>
+  <tr><td>関数の戻り値</td><td>📝 明示推奨</td><td>実装ミスを防げる。ドキュメントになる</td></tr>
+  <tr><td>値なしで宣言した変数</td><td>📝 明示する</td><td><code>strict: true</code> ではコンパイルエラー（<code>noImplicitAny</code>違反）</td></tr>
+  <tr><td>複雑な型が推論される場所</td><td>📝 明示する</td><td>読みやすさのため</td></tr>
+</table>
+
+<pre><span class="cmt">// 値なし宣言は明示必須</span>
+<span class="kw">let</span> name: <span class="type">string</span>        <span class="cmt">// OK</span>
+<span class="kw">let</span> name2               <span class="cmt">// strict: true ではコンパイルエラー（noImplicitAny違反）</span>
+
+<span class="cmt">// 引数と戻り値は書く</span>
+<span class="kw">function</span> <span class="fn">getUser</span>(id: <span class="type">number</span>): <span class="type">User</span> {
+  <span class="kw">return</span> users.find(u => u.id === id)!
+}</pre>
+
+<div class="tip">「型を書きすぎ」より「型を書かなさすぎ」の方が危険。迷ったら書く。</div>
+
+</section>
+
+<!-- S04 null/undefined -->
+<section id="s04">
+<div class="sec-header"><span class="s-icon">⚠️</span><span class="s-title">04 null / undefined の扱い</span><span class="s-desc">strictNullChecks・?. ・?? ・!</span></div>
+
+<p>TypeScriptの<code>strict</code>モードでは<code>null</code>/<code>undefined</code>は別の型として扱われる。JSで最も多いバグ「Cannot read property of null」をコンパイル時に防げる。</p>
+
+<pre><span class="cmt">// strictNullChecks が有効な場合</span>
+<span class="kw">let</span> name: <span class="type">string</span> = <span class="str">'山田'</span>
+name = <span class="kw">null</span>   <span class="cmt">// ❌ エラー: null は string に代入できない</span>
+
+<span class="cmt">// nullable にするには Union を使う</span>
+<span class="kw">let</span> name: <span class="type">string</span> | <span class="type">null</span> = <span class="str">'山田'</span>
+name = <span class="kw">null</span>   <span class="cmt">// ✅ OK</span></pre>
+
+<h3>安全に扱う3つの演算子</h3>
+<ul class="flist">
+  <li>
+    <span class="flist-icon">🔗</span>
+    <div class="flist-body">
+      <div class="flist-label">?. オプショナルチェーン</div>
+      <div class="flist-title">user?.address?.city</div>
+      <div class="flist-desc">nullまたはundefinedならundefinedを返す。エラーにならない。プロパティアクセス・メソッド呼び出し・配列インデックスすべてに使える</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🔀</span>
+    <div class="flist-body">
+      <div class="flist-label">?? Nullish合体演算子</div>
+      <div class="flist-title">value ?? 'デフォルト'</div>
+      <div class="flist-desc">左辺がnull/undefinedのときだけ右辺を使う。<code>0</code>や<code>''</code>は「値がある」として通す。<code>||</code>との最大の違いはここ</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">⚠️</span>
+    <div class="flist-body">
+      <div class="flist-label">! Non-nullアサーション（最終手段）</div>
+      <div class="flist-title">element!</div>
+      <div class="flist-desc">「絶対nullじゃない」と型チェックに宣言。実行時チェックなしで危険。<code>if</code>文による型ガードに置き換えるのが基本。どうしても必要な場合のみ使う</div>
+    </div>
+  </li>
+</ul>
+
+<pre><span class="kw">interface</span> <span class="type">Address</span> { city: <span class="type">string</span> }
+<span class="kw">interface</span> <span class="type">User</span> { name: <span class="type">string</span>; address?: <span class="type">Address</span> }
+
+<span class="kw">const</span> user: <span class="type">User</span> | <span class="type">null</span> = getUser(<span class="num">1</span>)
+
+<span class="cmt">// ?. — nullなら undefined になる（エラーにならない）</span>
+<span class="kw">const</span> city = user?.address?.city     <span class="cmt">// string | undefined</span>
+
+<span class="cmt">// ?? — null/undefinedのときのデフォルト値</span>
+<span class="kw">const</span> display = user?.name ?? <span class="str">'匿名'</span>  <span class="cmt">// string</span>
+
+<span class="cmt">// || との違い: ?? は 0 や '' を通す</span>
+<span class="kw">const</span> count = data.count ?? <span class="num">0</span>  <span class="cmt">// countが0でも0を使う（|| だと 0 を飛ばす）</span>
+
+<span class="cmt">// ! の代替：優先順位は「型ガード（if文）&gt; as &gt; !」— as も実行時保証なし</span>
+
+<span class="cmt">// ✅ 基本：型ガード（if文）で絞り込む</span>
+<span class="kw">const</span> el = document.getElementById(<span class="str">'app'</span>)
+<span class="kw">if</span> (el <span class="kw">instanceof</span> <span class="type">HTMLDivElement</span>) {
+  el.style.color = <span class="str">'red'</span>  <span class="cmt">// この中では HTMLDivElement 型が保証される</span>
+}
+
+<span class="cmt">// ⚠️ やむを得ない場合のみ：as（実行時保証なし）</span>
+<span class="kw">const</span> el2 = document.getElementById(<span class="str">'app'</span>) <span class="kw">as</span> <span class="type">HTMLDivElement</span>
+<span class="kw">const</span> el2 = document.getElementById(<span class="str">'app'</span>)!                   <span class="cmt">// △ 動くが理由が不明瞭</span></pre>
+
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ || を使うと 0 や '' が消える</div>
+  <pre><span class="kw">const</span> count = data.count || <span class="num">0</span>
+<span class="cmt">// data.count が 0 のとき → 0（デフォルト）になる</span>
+<span class="cmt">// フォームの入力件数などで誤動作する</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ ?? なら 0 や '' を正しく扱える</div>
+  <pre><span class="kw">const</span> count = data.count ?? <span class="num">0</span>
+<span class="cmt">// data.count が 0 → 0（本物の0）を使う</span>
+<span class="cmt">// null/undefined のときだけ 0 を使う</span></pre>
+</div>
+</div>
+
+</section>
+
+<!-- ===== PART 2: 型の構造 ===== -->
+<p class="part-label">Part 2 — 型の構造</p>
+
+<!-- S05 interface vs type -->
+<section id="s05">
+<div class="sec-header"><span class="s-icon">🏗️</span><span class="s-title">05 interface vs type</span><span class="s-desc">オブジェクト型の定義方法と使い分け</span></div>
+
+<p>オブジェクトの「形」を定義する方法が2つある。どちらでも動くが、使い分けに意味がある。</p>
+
+<pre><span class="cmt">// interface — オブジェクトの形を定義</span>
+<span class="kw">interface</span> <span class="type">User</span> {
+  id:      <span class="type">number</span>
+  name:    <span class="type">string</span>
+  email?:  <span class="type">string</span>   <span class="cmt">// ? がついたプロパティは省略可能（optional）</span>
+  readonly createdAt: <span class="type">Date</span>  <span class="cmt">// readonly = 再代入不可</span>
+}
+
+<span class="cmt">// type alias — 同じことができる</span>
+<span class="kw">type</span> <span class="type">User</span> = {
+  id:      <span class="type">number</span>
+  name:    <span class="type">string</span>
+  email?:  <span class="type">string</span>
+  <span class="kw">readonly</span> createdAt: <span class="type">Date</span>
+}</pre>
+
+<h3>決定的な違い</h3>
+<table>
+  <tr><th>違い</th><th>interface</th><th>type</th></tr>
+  <tr><td>Union型の定義</td><td>❌ できない</td><td>✅ <code>type ID = string | number</code></td></tr>
+  <tr><td>拡張</td><td><code>extends</code> で継承</td><td><code>&amp;</code> で合成</td></tr>
+  <tr><td>同名での再定義</td><td>✅ 合成される（Declaration Merging）</td><td>❌ エラーになる</td></tr>
+  <tr><td>プリミティブ型に別名をつける</td><td>❌ できない</td><td>✅ <code>type ID = string</code></td></tr>
+</table>
+
+<pre><span class="cmt">// 拡張の書き方</span>
+<span class="kw">interface</span> <span class="type">AdminUser</span> <span class="kw">extends</span> <span class="type">User</span> {  <span class="cmt">// interface は extends</span>
+  role: <span class="str">'admin'</span>
+  permissions: <span class="type">string</span>[]
+}
+
+<span class="kw">type</span> <span class="type">AdminUser</span> = <span class="type">User</span> & {          <span class="cmt">// type は & (Intersection)</span>
+  role: <span class="str">'admin'</span>
+  permissions: <span class="type">string</span>[]
+}
+
+<span class="cmt">// type でしかできないこと</span>
+<span class="kw">type</span> <span class="type">ID</span> = <span class="type">string</span> | <span class="type">number</span>
+<span class="kw">type</span> <span class="type">Status</span> = <span class="str">'active'</span> | <span class="str">'inactive'</span>
+
+<span class="cmt">// Declaration Merging（ライブラリ型拡張に使う）</span>
+<span class="kw">interface</span> <span class="type">Window</span> {
+  myAppVersion: <span class="type">string</span>  <span class="cmt">// 既存のWindow型にプロパティを追加</span>
+}</pre>
+
+<h3>実務での使い分け方針</h3>
+<ul class="flist">
+  <li>
+    <span class="flist-icon">🏷️</span>
+    <div class="flist-body">
+      <div class="flist-label">interface を使う場面</div>
+      <div class="flist-title">オブジェクト形状の定義</div>
+      <div class="flist-desc">User・Product・ApiResponseなど「モノの形」を定義するとき。<code>extends</code>で継承できるので型の再利用がしやすい。また同名interfaceを複数書くとマージされるため、ライブラリの型拡張にも使われる</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🔧</span>
+    <div class="flist-body">
+      <div class="flist-label">type を使う場面</div>
+      <div class="flist-title">Union・プリミティブ・Mapped Types</div>
+      <div class="flist-desc">Union型（<code>string | number</code>）・リテラル型・ユーティリティ型（<code>Partial&lt;T&gt;</code>など）を使うとき。interfaceでは書けない複雑な型はtypeを使う</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">📋</span>
+    <div class="flist-body">
+      <div class="flist-label">実務の現実</div>
+      <div class="flist-title">どちらでもいいケースが多い — チーム規約に従う</div>
+      <div class="flist-desc">多くのプロジェクトでは「オブジェクト→interface、それ以外→type」か「全部type」かどちらかに統一している。混在させないことが最も重要</div>
+    </div>
+  </li>
+</ul>
+
+<div class="tip">迷ったら「オブジェクト形状 → interface、それ以外 → type」で始めると整理しやすい。</div>
+
+</section>
+
+<!-- S06 Union / Intersection / リテラル -->
+<section id="s06">
+<div class="sec-header"><span class="s-icon">🔀</span><span class="s-title">06 Union / Intersection / リテラル型</span><span class="s-desc">型を組み合わせる核心</span></div>
+
+<h3>Union型（|）— AまたはB</h3>
+<pre><span class="kw">type</span> <span class="type">StringOrNumber</span> = <span class="type">string</span> | <span class="type">number</span>
+<span class="kw">type</span> <span class="type">Status</span> = <span class="str">'active'</span> | <span class="str">'inactive'</span> | <span class="str">'pending'</span>
+<span class="kw">type</span> <span class="type">Nullable</span>&lt;<span class="type">T</span>&gt; = <span class="type">T</span> | <span class="type">null</span></pre>
+
+<h3>Intersection型（&）— AかつB</h3>
+<pre><span class="kw">type</span> <span class="type">Timestamps</span> = {
+  createdAt: <span class="type">Date</span>
+  updatedAt: <span class="type">Date</span>
+}
+<span class="kw">type</span> <span class="type">UserWithTimestamps</span> = <span class="type">User</span> & <span class="type">Timestamps</span>
+<span class="cmt">// User の全プロパティ + Timestamps の全プロパティ を持つ</span></pre>
+
+<h3>リテラル型 — 具体的な値で型を作る</h3>
+<pre><span class="kw">type</span> <span class="type">Direction</span> = <span class="str">'north'</span> | <span class="str">'south'</span> | <span class="str">'east'</span> | <span class="str">'west'</span>
+<span class="kw">type</span> <span class="type">HTTPStatus</span> = <span class="num">200</span> | <span class="num">201</span> | <span class="num">400</span> | <span class="num">401</span> | <span class="num">404</span> | <span class="num">500</span>
+<span class="kw">type</span> <span class="type">Toggle</span> = <span class="kw">true</span> | <span class="kw">false</span>  <span class="cmt">// boolean と同じだが意図が明確</span>
+
+<span class="kw">function</span> <span class="fn">move</span>(dir: <span class="type">Direction</span>): <span class="kw">void</span> {
+  <span class="cmt">// 'north'/'south'/'east'/'west' 以外は渡せない</span>
+}</pre>
+
+<h3>Discriminated Union — 実務で最重要パターン</h3>
+<p>「kind」や「type」のような識別子フィールドを持つUnion。絞り込みと組み合わせると強力。</p>
+<pre><span class="kw">type</span> <span class="type">Shape</span> =
+  | { kind: <span class="str">'circle'</span>;    radius: <span class="type">number</span> }
+  | { kind: <span class="str">'rectangle'</span>; width: <span class="type">number</span>; height: <span class="type">number</span> }
+  | { kind: <span class="str">'triangle'</span>;  base: <span class="type">number</span>;  height: <span class="type">number</span> }
+
+<span class="kw">function</span> <span class="fn">area</span>(shape: <span class="type">Shape</span>): <span class="type">number</span> {
+  <span class="kw">switch</span> (shape.kind) {
+    <span class="kw">case</span> <span class="str">'circle'</span>:
+      <span class="kw">return</span> Math.PI * shape.radius ** <span class="num">2</span>    <span class="cmt">// shape は circle 型に絞られる</span>
+    <span class="kw">case</span> <span class="str">'rectangle'</span>:
+      <span class="kw">return</span> shape.width * shape.height
+    <span class="kw">case</span> <span class="str">'triangle'</span>:
+      <span class="kw">return</span> (shape.base * shape.height) / <span class="num">2</span>
+  }
+}
+
+<span class="cmt">// APIレスポンスでよく使うパターン</span>
+<span class="kw">type</span> <span class="type">ApiResult</span>&lt;<span class="type">T</span>&gt; =
+  | { ok: <span class="kw">true</span>;  data: <span class="type">T</span> }
+  | { ok: <span class="kw">false</span>; error: <span class="type">string</span> }</pre>
+
+<div class="tip">Discriminated Unionは「状態管理」「APIレスポンス」「エラーハンドリング」どこでも使える。覚えると世界が変わる。</div>
+
+</section>
+
+<!-- S07 配列・タプル・as const -->
+<section id="s07">
+<div class="sec-header"><span class="s-icon">📦</span><span class="s-title">07 配列・タプル・as const</span><span class="s-desc">コレクション型とEnumより安全な定数</span></div>
+
+<h3>配列</h3>
+<pre><span class="kw">const</span> names:  <span class="type">string</span>[] = [<span class="str">'山田'</span>, <span class="str">'佐藤'</span>, <span class="str">'鈴木'</span>]   <span class="cmt">// 書き方①</span>
+<span class="kw">const</span> names2: <span class="type">Array</span>&lt;<span class="type">string</span>&gt; = [<span class="str">'山田'</span>, <span class="str">'佐藤'</span>]      <span class="cmt">// 書き方②（同じ意味）</span>
+
+<span class="cmt">// 複数の型が混在する配列</span>
+<span class="kw">const</span> mixed: (<span class="type">string</span> | <span class="type">number</span>)[] = [<span class="str">'a'</span>, <span class="num">1</span>, <span class="str">'b'</span>, <span class="num">2</span>]
+
+<span class="cmt">// readonly配列（変更不可）</span>
+<span class="kw">const</span> fixed: <span class="kw">readonly</span> <span class="type">string</span>[] = [<span class="str">'a'</span>, <span class="str">'b'</span>]
+<span class="cmt">// fixed.push('c')  ❌ エラー</span></pre>
+
+<h3>タプル — 固定長・位置で型が決まる配列</h3>
+<pre><span class="kw">const</span> point:   [<span class="type">number</span>, <span class="type">number</span>] = [<span class="num">10</span>, <span class="num">20</span>]
+<span class="kw">const</span> nameAge: [<span class="type">string</span>, <span class="type">number</span>] = [<span class="str">'山田'</span>, <span class="num">32</span>]
+
+<span class="cmt">// React の useState がタプルを返す</span>
+<span class="kw">const</span> [count, setCount] = useState&lt;<span class="type">number</span>&gt;(<span class="num">0</span>)
+<span class="cmt">//     ↑string    ↑Dispatch&lt;SetStateAction&lt;number&gt;&gt;</span></pre>
+
+<h3>as const — Enumより安全な定数定義</h3>
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ enum — 問題が多い（Tree-shakingされない、型が緩いなど）</div>
+  <pre><span class="kw">enum</span> <span class="type">Status</span> {
+  Active  = <span class="str">'ACTIVE'</span>,
+  Inactive = <span class="str">'INACTIVE'</span>,
+}
+<span class="cmt">// コンパイル後にオブジェクトが残る</span>
+<span class="cmt">// 数値enumは特に危険</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ as const — 実務推奨パターン</div>
+  <pre><span class="kw">const</span> STATUS = {
+  Active:   <span class="str">'ACTIVE'</span>,
+  Inactive: <span class="str">'INACTIVE'</span>,
+} <span class="kw">as const</span>
+
+<span class="cmt">// 値のUnion型を自動生成（keyof の詳細は S12 参照）</span>
+<span class="kw">type</span> <span class="type">Status</span> = <span class="kw">typeof</span> STATUS[<span class="kw">keyof typeof</span> STATUS]
+<span class="cmt">// = 'ACTIVE' | 'INACTIVE'</span></pre>
+</div>
+</div>
+
+<pre><span class="cmt">// as const で配列をタプルとして固定</span>
+<span class="kw">const</span> ALLOWED_ROLES = [<span class="str">'admin'</span>, <span class="str">'user'</span>, <span class="str">'viewer'</span>] <span class="kw">as const</span>
+<span class="kw">type</span> <span class="type">Role</span> = <span class="kw">typeof</span> ALLOWED_ROLES[<span class="type">number</span>]
+<span class="cmt">// = 'admin' | 'user' | 'viewer'</span></pre>
+
+<h3>satisfies 演算子（TypeScript 4.9+）</h3>
+<p><code>as</code> は型を上書きするが、<code>satisfies</code> は「この型を満たしているか検証しつつ、推論した具体的な型を保持する」演算子。<code>as const</code> と組み合わせると強力。</p>
+<pre><span class="kw">const</span> config = {
+  host: <span class="str">'localhost'</span>,
+  port: <span class="num">3000</span>,
+  debug: <span class="kw">true</span>,
+} <span class="kw">satisfies</span> { host: <span class="type">string</span>; port: <span class="type">number</span>; debug: <span class="type">boolean</span> }
+
+<span class="cmt">// as で型を付けた場合: config.host は string（広い型）</span>
+<span class="cmt">// satisfies の場合: config.host は "localhost"（リテラル型を保持）</span>
+
+<span class="kw">const</span> palette = {
+  red:  [<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>],
+  blue: <span class="str">'#0000ff'</span>,  <span class="cmt">// 型が違っても OK（satisfies は各プロパティを個別検証）</span>
+} <span class="kw">satisfies</span> <span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">string</span> | <span class="type">number</span>[]&gt;
+
+palette.red.map(<span class="fn">String</span>)   <span class="cmt">// ✅ red は number[] と推論される（as だと string|number[] で map できない）</span>
+palette.blue.toUpperCase() <span class="cmt">// ✅ blue は string と推論される</span></pre>
+
+</section>
+
+<!-- S08 関数の型 -->
+<section id="s08">
+<div class="sec-header"><span class="s-icon">⚙️</span><span class="s-title">08 関数の型</span><span class="s-desc">引数・戻り値・オーバーロード</span></div>
+
+<pre><span class="cmt">// 基本 — 引数と戻り値に型をつける</span>
+<span class="kw">function</span> <span class="fn">add</span>(a: <span class="type">number</span>, b: <span class="type">number</span>): <span class="type">number</span> {
+  <span class="kw">return</span> a + b
+}
+
+<span class="cmt">// アロー関数</span>
+<span class="kw">const</span> add = (a: <span class="type">number</span>, b: <span class="type">number</span>): <span class="type">number</span> => a + b
+
+<span class="cmt">// Optional パラメータ（? をつける）</span>
+<span class="kw">function</span> <span class="fn">greet</span>(name: <span class="type">string</span>, greeting?: <span class="type">string</span>): <span class="type">string</span> {
+  <span class="kw">return</span> <span class="str">`${greeting ?? 'こんにちは'}、${name}さん`</span>
+}
+
+<span class="cmt">// デフォルト値</span>
+<span class="kw">function</span> <span class="fn">greet2</span>(name: <span class="type">string</span>, greeting: <span class="type">string</span> = <span class="str">'こんにちは'</span>): <span class="type">string</span> {
+  <span class="kw">return</span> <span class="str">`${greeting}、${name}さん`</span>
+}
+
+<span class="cmt">// Rest パラメータ</span>
+<span class="kw">function</span> <span class="fn">sum</span>(...numbers: <span class="type">number</span>[]): <span class="type">number</span> {
+  <span class="kw">return</span> numbers.reduce((acc, n) => acc + n, <span class="num">0</span>)
+}</pre>
+
+<h3>関数型（型として定義する）</h3>
+<pre><span class="cmt">// 関数の型を変数のように定義できる</span>
+<span class="kw">type</span> <span class="type">Handler</span> = (event: <span class="type">MouseEvent</span>) => <span class="kw">void</span>
+<span class="kw">type</span> <span class="type">Transformer</span>&lt;<span class="type">T</span>, <span class="type">U</span>&gt; = (input: <span class="type">T</span>) => <span class="type">U</span>
+<span class="kw">type</span> <span class="type">AsyncFetcher</span>&lt;<span class="type">T</span>&gt; = (id: <span class="type">number</span>) => <span class="type">Promise</span>&lt;<span class="type">T</span>&gt;
+
+<span class="cmt">// コールバックに型をつける</span>
+<span class="kw">function</span> <span class="fn">withLogging</span>&lt;<span class="type">T</span>&gt;(fn: () => <span class="type">T</span>): <span class="type">T</span> {
+  console.log(<span class="str">'実行開始'</span>)
+  <span class="kw">const</span> result = <span class="fn">fn</span>()
+  console.log(<span class="str">'実行完了'</span>)
+  <span class="kw">return</span> result
+}</pre>
+
+<h3>void vs never</h3>
+<div class="cards c2">
+  <div class="card ts"><div class="card-label">void</div><div class="card-value">値を返さない関数</div><div class="card-desc">console.logなど。returnなし or return undefinedで終わる</div></div>
+  <div class="card red"><div class="card-label">never</div><div class="card-value">絶対に返らない関数</div><div class="card-desc">必ず例外をスローする・無限ループ。returnに到達しない</div></div>
+</div>
+<pre><span class="kw">function</span> <span class="fn">log</span>(msg: <span class="type">string</span>): <span class="kw">void</span> {
+  console.log(msg)  <span class="cmt">// return なし</span>
+}
+
+<span class="kw">function</span> <span class="fn">throwError</span>(msg: <span class="type">string</span>): <span class="kw">never</span> {
+  <span class="kw">throw new</span> Error(msg)  <span class="cmt">// 必ず例外。絶対にreturnしない</span>
+}
+
+<span class="cmt">// never は網羅チェックにも使える</span>
+<span class="kw">function</span> <span class="fn">assertNever</span>(x: <span class="kw">never</span>): <span class="kw">never</span> {
+  <span class="kw">throw new</span> Error(<span class="str">`想定外の値: ${x}`</span>)
+}</pre>
+
+</section>
+
+<!-- ===== PART 3: 型の力 ===== -->
+<p class="part-label">Part 3 — 型の力</p>
+
+<!-- S09 ジェネリクス -->
+<section id="s09">
+<div class="sec-header"><span class="s-icon">🔧</span><span class="s-title">09 ジェネリクス</span><span class="s-desc">型を引数として受け取る — 汎用コードの書き方</span></div>
+
+<p>「どんな型でも使えるけど、型安全は保つ」関数・クラス・インターフェースを作る仕組み。<code>&lt;T&gt;</code> が型の仮引数。</p>
+
+<div class="compare">
+<div class="cbox bad">
+  <div class="cbox-title">❌ any — 型情報が失われる</div>
+  <pre><span class="kw">function</span> <span class="fn">first</span>(arr: <span class="type">any</span>[]): <span class="type">any</span> {
+  <span class="kw">return</span> arr[<span class="num">0</span>]
+}
+<span class="kw">const</span> x = <span class="fn">first</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+<span class="cmt">// x は any型 → .toFixed() を呼べるか不明</span></pre>
+</div>
+<div class="cbox good">
+  <div class="cbox-title">✅ ジェネリクス — 型が保たれる</div>
+  <pre><span class="kw">function</span> <span class="fn">first</span>&lt;<span class="type">T</span>&gt;(arr: <span class="type">T</span>[]): <span class="type">T</span> | <span class="type">undefined</span> {
+  <span class="kw">return</span> arr[<span class="num">0</span>]
+}
+<span class="kw">const</span> x = <span class="fn">first</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+<span class="cmt">// x は number | undefined → 型安全</span></pre>
+</div>
+</div>
+
+<pre><span class="cmt">// 型パラメータは推論される（明示不要なケースが多い）</span>
+<span class="fn">first</span>([<span class="str">'a'</span>, <span class="str">'b'</span>])         <span class="cmt">// T = string と推論</span>
+<span class="fn">first</span>&lt;<span class="type">string</span>&gt;([<span class="str">'a'</span>, <span class="str">'b'</span>]) <span class="cmt">// 明示する場合（通常不要）</span>
+
+<span class="cmt">// 複数の型パラメータ</span>
+<span class="kw">function</span> <span class="fn">pair</span>&lt;<span class="type">K</span>, <span class="type">V</span>&gt;(key: <span class="type">K</span>, value: <span class="type">V</span>): [<span class="type">K</span>, <span class="type">V</span>] {
+  <span class="kw">return</span> [key, value]
+}
+<span class="fn">pair</span>(<span class="str">'name'</span>, <span class="num">32</span>)  <span class="cmt">// [string, number]</span></pre>
+
+<h3>型の制約（extends）</h3>
+<pre><span class="cmt">// T は { length: number } を持つ型に限定</span>
+<span class="kw">function</span> <span class="fn">getLength</span>&lt;<span class="type">T</span> <span class="kw">extends</span> { length: <span class="type">number</span> }&gt;(arg: <span class="type">T</span>): <span class="type">number</span> {
+  <span class="kw">return</span> arg.length  <span class="cmt">// string[] でも string でも使える</span>
+}
+
+<span class="cmt">// T は User のサブタイプに限定</span>
+<span class="kw">function</span> <span class="fn">getEmail</span>&lt;<span class="type">T</span> <span class="kw">extends</span> { email: <span class="type">string</span> }&gt;(user: <span class="type">T</span>): <span class="type">string</span> {
+  <span class="kw">return</span> user.email
+}</pre>
+
+<h3>インターフェース・型でのジェネリクス</h3>
+<pre><span class="cmt">// APIレスポンスの共通型（実務頻出）</span>
+<span class="kw">interface</span> <span class="type">ApiResponse</span>&lt;<span class="type">T</span>&gt; {
+  data:    <span class="type">T</span>
+  status:  <span class="type">number</span>
+  message: <span class="type">string</span>
+}
+
+<span class="kw">type</span> <span class="type">UserResponse</span>     = <span class="type">ApiResponse</span>&lt;<span class="type">User</span>&gt;
+<span class="kw">type</span> <span class="type">UserListResponse</span> = <span class="type">ApiResponse</span>&lt;<span class="type">User</span>[]&gt;
+<span class="kw">type</span> <span class="type">PaginatedUsers</span>  = <span class="type">ApiResponse</span>&lt;{ items: <span class="type">User</span>[]; total: <span class="type">number</span> }&gt;
+
+<span class="cmt">// fetch のラッパー（Promiseと組み合わせ）</span>
+<span class="kw">async function</span> <span class="fn">fetchData</span>&lt;<span class="type">T</span>&gt;(url: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">T</span>&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(url)
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`HTTP ${res.status}`</span>)
+  <span class="kw">return</span> res.json() <span class="kw">as</span> <span class="type">Promise</span>&lt;<span class="type">T</span>&gt;
+}
+
+<span class="cmt">// 使い方</span>
+<span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">fetchData</span>&lt;<span class="type">User</span>&gt;(<span class="str">'/api/users/1'</span>)
+<span class="cmt">// user は User型 — .name .email にアクセスできる</span></pre>
+<p class="note">⚠️ <code>res.json() as Promise&lt;T&gt;</code> は構文上動くが、実行時の型保証はない（<code>Promise&lt;any&gt;</code> を <code>as</code> でキャストしているだけ）。外部APIレスポンスを安全に扱うには <a href="#s17">S17 Zod</a> でバリデートするのが正しいアプローチ。</p>
+
+<h3>実務でよく書くジェネリクスパターン</h3>
+<pre><span class="cmt">// ① リストをIDでマップに変換（汎用ユーティリティ）</span>
+<span class="kw">function</span> <span class="fn">keyBy</span>&lt;<span class="type">T</span> <span class="kw">extends</span> { id: <span class="type">number</span> }&gt;(items: <span class="type">T</span>[]): <span class="type">Record</span>&lt;<span class="type">number</span>, <span class="type">T</span>&gt; {
+  <span class="kw">return</span> items.reduce((acc, item) =&gt; ({ ...acc, [item.id]: item }), {} <span class="kw">as</span> <span class="type">Record</span>&lt;<span class="type">number</span>, <span class="type">T</span>&gt;)
+}
+<span class="kw">const</span> userMap = <span class="fn">keyBy</span>(users)    <span class="cmt">// T = User → Record&lt;number, User&gt;</span>
+<span class="kw">const</span> prodMap = <span class="fn">keyBy</span>(products) <span class="cmt">// T = Product → Record&lt;number, Product&gt;</span>
+
+<span class="cmt">// ② ページネーション付きレスポンス</span>
+<span class="kw">interface</span> <span class="type">Paginated</span>&lt;<span class="type">T</span>&gt; {
+  items:   <span class="type">T</span>[]
+  total:   <span class="type">number</span>
+  page:    <span class="type">number</span>
+  perPage: <span class="type">number</span>
+}
+<span class="kw">async function</span> <span class="fn">fetchList</span>&lt;<span class="type">T</span>&gt;(url: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">Paginated</span>&lt;<span class="type">T</span>&gt;&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(url)
+  <span class="kw">return</span> res.json()
+}
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">fetchList</span>&lt;<span class="type">User</span>&gt;(<span class="str">'/api/users'</span>)
+<span class="cmt">// result.items は User[]、result.total は number — 型が自動でつく</span>
+
+<span class="cmt">// ③ localStorage ラッパー（型安全に読み書き）</span>
+<span class="kw">function</span> <span class="fn">getStorage</span>&lt;<span class="type">T</span>&gt;(key: <span class="type">string</span>, fallback: <span class="type">T</span>): <span class="type">T</span> {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> raw = localStorage.getItem(key)
+    <span class="kw">return</span> raw ? (JSON.parse(raw) <span class="kw">as</span> <span class="type">T</span>) : fallback
+  } <span class="kw">catch</span> {
+    <span class="kw">return</span> fallback
+  }
+}
+<span class="kw">const</span> theme  = <span class="fn">getStorage</span>&lt;<span class="str">'light'</span> | <span class="str">'dark'</span>&gt;(<span class="str">'theme'</span>, <span class="str">'light'</span>)
+<span class="kw">const</span> userId = <span class="fn">getStorage</span>&lt;<span class="type">number</span> | <span class="type">null</span>&gt;(<span class="str">'userId'</span>, <span class="kw">null</span>)</pre>
+
+<div class="tip">「どんな型でも動くけど型安全を保ちたい」と思ったらジェネリクスのサイン。anyで妥協する前にTを試してみる。</div>
+
+</section>
+
+<!-- S10 ユーティリティ型 -->
+<section id="s10">
+<div class="sec-header"><span class="s-icon">🛠️</span><span class="s-title">10 ユーティリティ型</span><span class="s-desc">Partial・Pick・Omit・Record・ReturnType など</span></div>
+
+<p>TypeScript組み込みの「型変換ツール」。毎回一から書かずにここから選ぶ。</p>
+
+<pre><span class="cmt">// 例となる型</span>
+<span class="kw">interface</span> <span class="type">User</span> {
+  id:       <span class="type">number</span>
+  name:     <span class="type">string</span>
+  email:    <span class="type">string</span>
+  password: <span class="type">string</span>
+  role:     <span class="str">'user'</span> | <span class="str">'admin'</span>
+}</pre>
+
+<div class="cards c2">
+  <div class="card ts"><div class="card-label">Partial&lt;T&gt;</div><div class="card-value">全プロパティを省略可能に</div><div class="card-desc">UPDATEのリクエスト型など「一部だけ変更」に使う</div></div>
+  <div class="card ts"><div class="card-label">Required&lt;T&gt;</div><div class="card-value">全プロパティを必須に</div><div class="card-desc">Partialの逆。省略可能なものを全部必須にする</div></div>
+  <div class="card ts"><div class="card-label">Readonly&lt;T&gt;</div><div class="card-value">全プロパティを読み取り専用に</div><div class="card-desc">変更させたくないオブジェクトに。イミュータブル設計</div></div>
+  <div class="card green"><div class="card-label">Pick&lt;T, K&gt;</div><div class="card-value">必要なキーだけ取り出す</div><div class="card-desc">パスワードなど除いた公開用型を作る</div></div>
+  <div class="card green"><div class="card-label">Omit&lt;T, K&gt;</div><div class="card-value">指定キーを除外する</div><div class="card-desc">Pick の逆。「これ以外全部」という書き方</div></div>
+  <div class="card purple"><div class="card-label">Record&lt;K, V&gt;</div><div class="card-value">キーと値の型でオブジェクト型を作る</div><div class="card-desc">マップ・辞書型。 {[key: string]: User} と同じ</div></div>
+</div>
+
+<pre><span class="cmt">// Partial — UPDATEのリクエストボディに</span>
+<span class="kw">type</span> <span class="type">UpdateUserDto</span> = <span class="type">Partial</span>&lt;<span class="type">User</span>&gt;
+<span class="cmt">// { id?: number; name?: string; email?: string; ... }</span>
+
+<span class="cmt">// Pick — 必要なフィールドだけ</span>
+<span class="kw">type</span> <span class="type">PublicUser</span> = <span class="type">Pick</span>&lt;<span class="type">User</span>, <span class="str">'id'</span> | <span class="str">'name'</span> | <span class="str">'email'</span>&gt;
+<span class="cmt">// { id: number; name: string; email: string }</span>
+
+<span class="cmt">// Omit — パスワードを除いた型</span>
+<span class="kw">type</span> <span class="type">SafeUser</span> = <span class="type">Omit</span>&lt;<span class="type">User</span>, <span class="str">'password'</span>&gt;
+<span class="cmt">// { id: number; name: string; email: string; role: ... }</span>
+
+<span class="cmt">// Record — IDをキーにしたユーザーマップ</span>
+<span class="kw">type</span> <span class="type">UserMap</span> = <span class="type">Record</span>&lt;<span class="type">number</span>, <span class="type">User</span>&gt;
+<span class="kw">const</span> cache: <span class="type">UserMap</span> = {
+  <span class="num">1</span>: { id: <span class="num">1</span>, name: <span class="str">'山田'</span>, email: <span class="str">'yamada@example.com'</span>, password: <span class="str">'...'</span>, role: <span class="str">'user'</span> }
+}</pre>
+
+<h3>関数・型から型を取り出すユーティリティ</h3>
+<pre><span class="cmt">// ReturnType — 関数の戻り値型を取得</span>
+<span class="kw">function</span> <span class="fn">getUser</span>() { <span class="kw">return</span> { id: <span class="num">1</span>, name: <span class="str">'山田'</span> } }
+<span class="kw">type</span> <span class="type">UserType</span> = <span class="type">ReturnType</span>&lt;<span class="kw">typeof</span> getUser&gt;
+<span class="cmt">// { id: number; name: string }</span>
+
+<span class="cmt">// Parameters — 関数の引数型を取得</span>
+<span class="kw">function</span> <span class="fn">createUser</span>(name: <span class="type">string</span>, role: <span class="str">'user'</span> | <span class="str">'admin'</span>) {}
+<span class="kw">type</span> <span class="type">CreateArgs</span> = <span class="type">Parameters</span>&lt;<span class="kw">typeof</span> createUser&gt;
+<span class="cmt">// [string, 'user' | 'admin']</span>
+
+<span class="cmt">// Awaited — Promiseの中身の型</span>
+<span class="kw">type</span> <span class="type">Resolved</span> = <span class="type">Awaited</span>&lt;<span class="type">Promise</span>&lt;<span class="type">User</span>&gt;&gt;  <span class="cmt">// User</span>
+
+<span class="cmt">// NonNullable — null/undefinedを除去</span>
+<span class="kw">type</span> <span class="type">MaybeName</span> = <span class="type">string</span> | <span class="type">null</span> | <span class="type">undefined</span>
+<span class="kw">type</span> <span class="type">DefiniteName</span> = <span class="type">NonNullable</span>&lt;<span class="type">MaybeName</span>&gt;  <span class="cmt">// string</span>
+
+<span class="cmt">// Extract / Exclude — Unionを絞る・除く</span>
+<span class="kw">type</span> <span class="type">ABC</span> = <span class="str">'a'</span> | <span class="str">'b'</span> | <span class="str">'c'</span>
+<span class="kw">type</span> <span class="type">OnlyAB</span> = <span class="type">Extract</span>&lt;<span class="type">ABC</span>, <span class="str">'a'</span> | <span class="str">'b'</span>&gt;  <span class="cmt">// 'a' | 'b'</span>
+<span class="kw">type</span> <span class="type">NotA</span>   = <span class="type">Exclude</span>&lt;<span class="type">ABC</span>, <span class="str">'a'</span>&gt;        <span class="cmt">// 'b' | 'c'</span></pre>
+
+</section>
+
+<!-- S11 型ガード -->
+<section id="s11">
+<div class="sec-header"><span class="s-icon">🛡️</span><span class="s-title">11 型ガード・絞り込み</span><span class="s-desc">Union型を安全に使う</span></div>
+
+<p>Union型の変数を「この中ではstringだ」と確定させること。TypeScriptが自動で型を絞り込んでくれる。</p>
+
+<h3>typeof — プリミティブの絞り込み</h3>
+<pre><span class="kw">function</span> <span class="fn">process</span>(value: <span class="type">string</span> | <span class="type">number</span>): <span class="type">string</span> {
+  <span class="kw">if</span> (<span class="kw">typeof</span> value === <span class="str">'string'</span>) {
+    <span class="kw">return</span> value.toUpperCase()  <span class="cmt">// ここは string確定</span>
+  }
+  <span class="kw">return</span> value.toFixed(<span class="num">2</span>)     <span class="cmt">// ここは number確定</span>
+}</pre>
+
+<h3>instanceof — クラスインスタンスの絞り込み</h3>
+<pre><span class="kw">function</span> <span class="fn">formatError</span>(err: <span class="type">unknown</span>): <span class="type">string</span> {
+  <span class="kw">if</span> (err <span class="kw">instanceof</span> Error) {
+    <span class="kw">return</span> err.message  <span class="cmt">// Error として使える</span>
+  }
+  <span class="kw">return</span> <span class="type">String</span>(err)
+}</pre>
+
+<h3>in — プロパティの存在チェック</h3>
+<pre><span class="kw">interface</span> <span class="type">Cat</span> { meow(): <span class="kw">void</span> }
+<span class="kw">interface</span> <span class="type">Dog</span> { bark(): <span class="kw">void</span> }
+
+<span class="kw">function</span> <span class="fn">speak</span>(animal: <span class="type">Cat</span> | <span class="type">Dog</span>): <span class="kw">void</span> {
+  <span class="kw">if</span> (<span class="str">'meow'</span> <span class="kw">in</span> animal) {
+    animal.meow()  <span class="cmt">// Cat として使える</span>
+  } <span class="kw">else</span> {
+    animal.bark()  <span class="cmt">// Dog として使える</span>
+  }
+}</pre>
+
+<h3>カスタム型ガード（is）— 自分で絞り込み関数を作る</h3>
+<pre><span class="kw">interface</span> <span class="type">User</span> { id: <span class="type">number</span>; name: <span class="type">string</span> }
+
+<span class="cmt">// 戻り値型に "value is User" を書く</span>
+<span class="kw">function</span> <span class="fn">isUser</span>(value: <span class="type">unknown</span>): value <span class="kw">is</span> <span class="type">User</span> {
+  <span class="kw">return</span> (
+    <span class="kw">typeof</span> value === <span class="str">'object'</span> &&
+    value !== <span class="kw">null</span> &&
+    <span class="str">'id'</span> <span class="kw">in</span> value &&
+    <span class="str">'name'</span> <span class="kw">in</span> value
+  )
+}
+
+<span class="kw">function</span> <span class="fn">processData</span>(data: <span class="type">unknown</span>): <span class="kw">void</span> {
+  <span class="kw">if</span> (<span class="fn">isUser</span>(data)) {
+    console.log(data.name)  <span class="cmt">// User として使える</span>
+  }
+}</pre>
+
+<h3>Discriminated Union + 網羅チェック</h3>
+<pre><span class="kw">type</span> <span class="type">Status</span> = <span class="str">'loading'</span> | <span class="str">'success'</span> | <span class="str">'error'</span>
+
+<span class="kw">function</span> <span class="fn">render</span>(status: <span class="type">Status</span>): <span class="type">string</span> {
+  <span class="kw">switch</span> (status) {
+    <span class="kw">case</span> <span class="str">'loading'</span>: <span class="kw">return</span> <span class="str">'読み込み中...'</span>
+    <span class="kw">case</span> <span class="str">'success'</span>: <span class="kw">return</span> <span class="str">'完了'</span>
+    <span class="kw">case</span> <span class="str">'error'</span>:   <span class="kw">return</span> <span class="str">'エラーが発生しました'</span>
+    <span class="kw">default</span>: {
+      <span class="cmt">// ここに到達したら never型になる = 全ケース対応済みの証明</span>
+      <span class="kw">const</span> _: <span class="kw">never</span> = status
+      <span class="kw">return</span> _
+    }
+  }
+  <span class="cmt">// Status に 'pending' を追加したとき default に到達 → コンパイルエラーで気づける</span>
+}</pre>
+
+<h3>場面ごとの型ガード選択チャート</h3>
+<table>
+  <tr><th>状況</th><th>使う型ガード</th><th>例</th></tr>
+  <tr><td>string / number / boolean か調べたい</td><td><code>typeof</code></td><td><code>typeof x === 'string'</code></td></tr>
+  <tr><td>Errorクラス・カスタムクラスか調べたい</td><td><code>instanceof</code></td><td><code>err instanceof Error</code></td></tr>
+  <tr><td>プロパティの有無で型を区別したい</td><td><code>in</code></td><td><code>'meow' in animal</code></td></tr>
+  <tr><td>APIレスポンス等の任意の値を検証したい</td><td>カスタム型ガード <code>is</code></td><td><code>isUser(data)</code></td></tr>
+  <tr><td>Union型を識別子フィールドで分岐したい</td><td>Discriminated Union</td><td><code>switch(shape.kind)</code></td></tr>
+  <tr><td>実行時にしっかりバリデートしたい</td><td>Zod</td><td><code>UserSchema.parse(data)</code></td></tr>
+</table>
+
+<pre><span class="cmt">// 実務でよくある「APIレスポンスが unknown で来る」パターン</span>
+<span class="kw">async function</span> <span class="fn">getUsers</span>(): <span class="type">Promise</span>&lt;<span class="type">User</span>[]&gt; {
+  <span class="kw">const</span> res  = <span class="kw">await</span> fetch(<span class="str">'/api/users'</span>)
+  <span class="kw">const</span> data: <span class="type">unknown</span> = <span class="kw">await</span> res.json()
+
+  <span class="cmt">// ① カスタム型ガードで手動チェック（小規模）</span>
+  <span class="kw">if</span> (!Array.isArray(data)) <span class="kw">throw new</span> Error(<span class="str">'配列でない'</span>)
+  <span class="kw">return</span> data <span class="kw">as</span> <span class="type">User</span>[]  <span class="cmt">// 完璧ではないが現実的な妥協点</span>
+
+  <span class="cmt">// ② Zodで検証（推奨 — ランタイムで型を保証）</span>
+  <span class="kw">return</span> z.array(UserSchema).parse(data)  <span class="cmt">// 型が違えば例外</span>
+}</pre>
+
+</section>
+
+<!-- S12 高度な型 -->
+<section id="s12">
+<div class="sec-header"><span class="s-icon">🔬</span><span class="s-title">12 高度な型</span><span class="s-desc">Mapped Types・Template Literal・Conditional Types</span></div>
+
+<p>実務でたまに使う・ライブラリ型を読むために知っておく高度な型。最初は「こんな書き方もある」程度でOK。</p>
+
+<h3>Mapped Types — 既存の型を変換して新しい型を作る</h3>
+<pre><span class="cmt">// Partial の実装がこれ</span>
+<span class="kw">type</span> <span class="type">MyPartial</span>&lt;<span class="type">T</span>&gt; = {
+  [<span class="type">K</span> <span class="kw">in keyof</span> <span class="type">T</span>]?: <span class="type">T</span>[<span class="type">K</span>]
+}
+
+<span class="cmt">// 全プロパティをstring型に変換</span>
+<span class="kw">type</span> <span class="type">Stringify</span>&lt;<span class="type">T</span>&gt; = {
+  [<span class="type">K</span> <span class="kw">in keyof</span> <span class="type">T</span>]: <span class="type">string</span>
+}
+
+<span class="cmt">// 実用例: フォームのバリデーションエラー型</span>
+<span class="kw">interface</span> <span class="type">LoginForm</span> { email: <span class="type">string</span>; password: <span class="type">string</span> }
+<span class="kw">type</span> <span class="type">FormErrors</span>&lt;<span class="type">T</span>&gt; = { [<span class="type">K</span> <span class="kw">in keyof</span> <span class="type">T</span>]?: <span class="type">string</span> }
+<span class="kw">type</span> <span class="type">LoginErrors</span> = <span class="type">FormErrors</span>&lt;<span class="type">LoginForm</span>&gt;
+<span class="cmt">// { email?: string; password?: string }</span></pre>
+
+<h3>Template Literal Types — 文字列の型を組み合わせる</h3>
+<pre><span class="kw">type</span> <span class="type">EventName</span> = <span class="str">'click'</span> | <span class="str">'focus'</span> | <span class="str">'blur'</span>
+<span class="kw">type</span> <span class="type">Handler</span>   = <span class="str">`on${Capitalize&lt;EventName&gt;}`</span>
+<span class="cmt">// 'onClick' | 'onFocus' | 'onBlur'</span>
+
+<span class="kw">type</span> <span class="type">ApiPath</span> = <span class="str">`/api/${string}`</span>  <span class="cmt">// '/api/'で始まるstring</span>
+
+<span class="kw">type</span> <span class="type">CSSProp</span> = <span class="str">'margin'</span> | <span class="str">'padding'</span>
+<span class="kw">type</span> <span class="type">Dir</span>     = <span class="str">'top'</span> | <span class="str">'bottom'</span> | <span class="str">'left'</span> | <span class="str">'right'</span>
+<span class="kw">type</span> <span class="type">SpaceProp</span> = <span class="str">`${CSSProp}-${Dir}`</span>
+<span class="cmt">// 'margin-top' | 'margin-bottom' | 'padding-left' | ... 8種</span></pre>
+
+<h3>Conditional Types — 型のif文</h3>
+<pre><span class="cmt">// T が string なら 'yes'、そうでなければ 'no'</span>
+<span class="kw">type</span> <span class="type">IsString</span>&lt;<span class="type">T</span>&gt; = <span class="type">T</span> <span class="kw">extends</span> <span class="type">string</span> ? <span class="str">'yes'</span> : <span class="str">'no'</span>
+<span class="kw">type</span> <span class="type">A</span> = <span class="type">IsString</span>&lt;<span class="type">string</span>&gt;  <span class="cmt">// 'yes'</span>
+<span class="kw">type</span> <span class="type">B</span> = <span class="type">IsString</span>&lt;<span class="type">number</span>&gt;  <span class="cmt">// 'no'</span>
+
+<span class="cmt">// infer — 型の中から型を取り出す（Awaited の実装がこれ）</span>
+<span class="kw">type</span> <span class="type">UnwrapPromise</span>&lt;<span class="type">T</span>&gt; = <span class="type">T</span> <span class="kw">extends</span> <span class="type">Promise</span>&lt;<span class="kw">infer</span> <span class="type">U</span>&gt; ? <span class="type">U</span> : <span class="type">T</span>
+<span class="kw">type</span> <span class="type">R</span> = <span class="type">UnwrapPromise</span>&lt;<span class="type">Promise</span>&lt;<span class="type">User</span>&gt;&gt;  <span class="cmt">// User</span>
+<span class="kw">type</span> <span class="type">S</span> = <span class="type">UnwrapPromise</span>&lt;<span class="type">string</span>&gt;          <span class="cmt">// string（Promiseでなければそのまま）</span></pre>
+
+<div class="info">Mapped Types と Template Literal Types は「ライブラリ側が提供する型」でよく使われる。読めれば十分で、最初から書けなくてOK。</div>
+
+</section>
+
+<!-- ===== PART 4: 実践基盤 ===== -->
+<p class="part-label">Part 4 — 実践基盤</p>
+
+<!-- S13 クラス -->
+<section id="s13">
+<div class="sec-header"><span class="s-icon">🏛️</span><span class="s-title">13 クラスと TypeScript</span><span class="s-desc">アクセス修飾子・readonly・abstract・implements</span></div>
+
+<p>TypeScriptのクラスはJavaScriptに加えて、アクセス修飾子・型安全なプロパティ・抽象クラスが使える。PHPのクラスと非常に近い。</p>
+
+<pre><span class="kw">class</span> <span class="type">User</span> {
+  <span class="kw">public</span>    id:        <span class="type">number</span>  <span class="cmt">// どこからでもアクセス可（デフォルト）</span>
+  <span class="kw">protected</span> name:      <span class="type">string</span>  <span class="cmt">// このクラス + 継承クラスから</span>
+  <span class="kw">private</span>   password:  <span class="type">string</span>  <span class="cmt">// このクラスの中だけ</span>
+  <span class="kw">readonly</span>  createdAt: <span class="type">Date</span>    <span class="cmt">// 再代入不可（コンストラクタ以外）</span>
+
+  <span class="kw">constructor</span>(id: <span class="type">number</span>, name: <span class="type">string</span>, password: <span class="type">string</span>) {
+    <span class="kw">this</span>.id        = id
+    <span class="kw">this</span>.name      = name
+    <span class="kw">this</span>.password  = password
+    <span class="kw">this</span>.createdAt = <span class="kw">new</span> Date()
+  }
+}
+
+<span class="cmt">// コンストラクタ省略記法（PHPにはない便利記法）</span>
+<span class="kw">class</span> <span class="type">Product</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">public readonly</span> id:    <span class="type">number</span>,
+    <span class="kw">public</span>          name:  <span class="type">string</span>,
+    <span class="kw">private</span>         price: <span class="type">number</span>,
+  ) {}
+  <span class="cmt">// 自動で this.id = id; this.name = name; this.price = price; になる</span>
+}</pre>
+
+<h3>継承・implements</h3>
+<pre><span class="cmt">// interfaceを実装する</span>
+<span class="kw">interface</span> <span class="type">Loggable</span> {
+  log(): <span class="type">string</span>
+}
+
+<span class="kw">class</span> <span class="type">Order</span> <span class="kw">implements</span> <span class="type">Loggable</span> {
+  <span class="kw">constructor</span>(<span class="kw">public</span> orderId: <span class="type">string</span>, <span class="kw">public</span> total: <span class="type">number</span>) {}
+
+  log(): <span class="type">string</span> {  <span class="cmt">// 実装しないとコンパイルエラー</span>
+    <span class="kw">return</span> <span class="str">`Order ${this.orderId}: ¥${this.total}`</span>
+  }
+}
+
+<span class="cmt">// 継承</span>
+<span class="kw">class</span> <span class="type">AdminUser</span> <span class="kw">extends</span> <span class="type">User</span> {
+  <span class="kw">constructor</span>(id: <span class="type">number</span>, name: <span class="type">string</span>, pw: <span class="type">string</span>, <span class="kw">public</span> role: <span class="str">'admin'</span> = <span class="str">'admin'</span>) {
+    <span class="kw">super</span>(id, name, pw)
+  }
+
+  greet(): <span class="type">string</span> {
+    <span class="kw">return</span> <span class="str">`管理者 ${this.name}`</span>  <span class="cmt">// protected なのでアクセス可</span>
+  }
+}</pre>
+
+<h3>abstract class — 実装を強制する基底クラス</h3>
+<pre><span class="kw">abstract class</span> <span class="type">Shape</span> {
+  <span class="kw">abstract</span> area(): <span class="type">number</span>    <span class="cmt">// 子クラスで必ず実装する</span>
+  <span class="kw">abstract</span> perimeter(): <span class="type">number</span>
+
+  describe(): <span class="type">string</span> {       <span class="cmt">// こちらはデフォルト実装あり</span>
+    <span class="kw">return</span> <span class="str">`面積: ${this.area().toFixed(2)}`</span>
+  }
+}
+
+<span class="kw">class</span> <span class="type">Circle</span> <span class="kw">extends</span> <span class="type">Shape</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> r: <span class="type">number</span>) { <span class="kw">super</span>() }
+  area()      { <span class="kw">return</span> Math.PI * <span class="kw">this</span>.r ** <span class="num">2</span> }
+  perimeter() { <span class="kw">return</span> <span class="num">2</span> * Math.PI * <span class="kw">this</span>.r }
+}
+
+<span class="cmt">// new Shape() はエラー — abstractクラスは直接インスタンス化できない</span></pre>
+
+<div class="tip">PHPを書いてきた人はクラスの感覚がそのまま使える。<code>private/protected/public/readonly/abstract/implements</code> はほぼ同じ意味。</div>
+
+</section>
+
+<!-- S14 モジュール -->
+<section id="s14">
+<div class="sec-header"><span class="s-icon">📁</span><span class="s-title">14 モジュール</span><span class="s-desc">import / export / import type</span></div>
+
+<pre><span class="cmt">// ===== 書き出す側（user.ts） =====</span>
+
+<span class="cmt">// 名前付きエクスポート（複数 OK）</span>
+<span class="kw">export interface</span> <span class="type">User</span> {
+  id: <span class="type">number</span>; name: <span class="type">string</span>; email: <span class="type">string</span>
+}
+<span class="kw">export type</span> <span class="type">UserRole</span> = <span class="str">'user'</span> | <span class="str">'admin'</span>
+<span class="kw">export function</span> <span class="fn">getUser</span>(id: <span class="type">number</span>): <span class="type">User</span> { ... }
+<span class="kw">export const</span> API_URL = <span class="str">'https://api.example.com'</span>
+
+<span class="cmt">// デフォルトエクスポート（1ファイル1つ）</span>
+<span class="kw">export default class</span> <span class="type">UserService</span> { ... }</pre>
+
+<pre><span class="cmt">// ===== 読み込む側 =====</span>
+
+<span class="cmt">// 名前付きインポート</span>
+<span class="kw">import</span> { User, getUser, API_URL } <span class="kw">from</span> <span class="str">'./user'</span>
+
+<span class="cmt">// デフォルトインポート</span>
+<span class="kw">import</span> UserService <span class="kw">from</span> <span class="str">'./UserService'</span>
+
+<span class="cmt">// 型のみインポート（実行時コードに残らない — ビルドサイズ最適化）</span>
+<span class="kw">import type</span> { User, UserRole } <span class="kw">from</span> <span class="str">'./user'</span>
+
+<span class="cmt">// 名前を変えてインポート</span>
+<span class="kw">import</span> { getUser <span class="kw">as</span> fetchUser } <span class="kw">from</span> <span class="str">'./user'</span>
+
+<span class="cmt">// 全部まとめてインポート</span>
+<span class="kw">import</span> * <span class="kw">as</span> UserModule <span class="kw">from</span> <span class="str">'./user'</span>
+UserModule.getUser(<span class="num">1</span>)</pre>
+
+<h3>Declaration files（.d.ts）</h3>
+<p>型定義だけのファイル。JavaScriptライブラリに型を追加したり、非TSファイルの型を定義するために使う。</p>
+<pre><span class="cmt">// svg.d.ts — SVGファイルのimportに型をつける</span>
+<span class="kw">declare module</span> <span class="str">'*.svg'</span> {
+  <span class="kw">const</span> content: <span class="type">string</span>
+  <span class="kw">export default</span> content
+}
+
+<span class="cmt">// window.d.ts — グローバル変数に型を追加</span>
+<span class="kw">declare global</span> {
+  <span class="kw">interface</span> <span class="type">Window</span> {
+    gtag: (...args: <span class="type">unknown</span>[]) => <span class="kw">void</span>
+  }
+}</pre>
+
+<div class="tip"><code>import type</code> は型だけをインポートする宣言。実行時のJavaScriptには一切含まれないのでバンドルサイズが減る。意識して使うとよい。</div>
+
+</section>
+
+<!-- S15 tsconfig -->
+<section id="s15">
+<div class="sec-header"><span class="s-icon">⚙️</span><span class="s-title">15 tsconfig.json 詳解</span><span class="s-desc">strict・target・paths・moduleResolution</span></div>
+
+<p>TypeScriptの動作をコントロールする設定ファイル。プロジェクトのルートに置く。</p>
+
+<pre><span class="cmt">// tsconfig.json — Vite + フロントエンド向けの実務的な設定</span>
+{
+  <span class="str">"compilerOptions"</span>: {
+
+    <span class="cmt">// ===== ターゲット =====</span>
+    <span class="str">"target"</span>: <span class="str">"ES2022"</span>,      <span class="cmt">// 出力するJSのバージョン。モダンブラウザなら ES2022</span>
+    <span class="str">"lib"</span>: [<span class="str">"ES2022"</span>, <span class="str">"DOM"</span>], <span class="cmt">// 使うAPIの型定義。DOMはブラウザのdocument等</span>
+    <span class="str">"module"</span>: <span class="str">"ESNext"</span>,      <span class="cmt">// import/export の形式</span>
+
+    <span class="cmt">// ===== モジュール解決 =====</span>
+    <span class="str">"moduleResolution"</span>: <span class="str">"bundler"</span>,   <span class="cmt">// Vite/esbuild向け。Nodeなら "node"</span>
+    <span class="str">"paths"</span>: {
+      <span class="str">"@/*"</span>: [<span class="str">"./src/*"</span>]              <span class="cmt">// @/components/Button → src/components/Button</span>
+    },
+    <span class="str">"baseUrl"</span>: <span class="str">"."</span>,
+
+    <span class="cmt">// ===== 厳格さ（これが最重要）=====</span>
+    <span class="str">"strict"</span>: <span class="kw">true</span>,            <span class="cmt">// 下記をまとめて有効化（必ずtrueに）</span>
+    <span class="cmt">//  strictNullChecks: true   — null/undefinedチェック</span>
+    <span class="cmt">//  noImplicitAny: true      — anyの暗黙的な使用を禁止</span>
+    <span class="cmt">//  strictFunctionTypes: true</span>
+    <span class="cmt">//  ...他5つ</span>
+    <span class="str">"noUnusedLocals"</span>: <span class="kw">true</span>,     <span class="cmt">// 未使用の変数をエラーに</span>
+    <span class="str">"noImplicitReturns"</span>: <span class="kw">true</span>,  <span class="cmt">// 全パスでreturnを強制</span>
+
+    <span class="cmt">// ===== 出力 =====</span>
+    <span class="str">"outDir"</span>: <span class="str">"./dist"</span>,
+    <span class="str">"rootDir"</span>: <span class="str">"./src"</span>,
+    <span class="str">"declaration"</span>: <span class="kw">true</span>,        <span class="cmt">// .d.tsファイルを生成（ライブラリ開発時）</span>
+    <span class="str">"sourceMap"</span>: <span class="kw">true</span>,          <span class="cmt">// デバッグ用ソースマップ</span>
+
+    <span class="cmt">// ===== 互換性 =====</span>
+    <span class="str">"esModuleInterop"</span>: <span class="kw">true</span>,    <span class="cmt">// CommonJSモジュールをimportで使えるように</span>
+    <span class="str">"skipLibCheck"</span>: <span class="kw">true</span>        <span class="cmt">// .d.tsの型チェックをスキップ（高速化）</span>
+  },
+  <span class="str">"include"</span>: [<span class="str">"src/**/*"</span>],
+  <span class="str">"exclude"</span>: [<span class="str">"node_modules"</span>, <span class="str">"dist"</span>]
+}</pre>
+
+<h3>strictの個別オプション解説</h3>
+<div style="overflow-x:auto"><table>
+  <tr><th>オプション</th><th>効果</th><th>重要度</th></tr>
+  <tr><td><code>strictNullChecks</code></td><td>null/undefinedを別の型として扱う。これがないと?.や??の意味がない</td><td>⭐⭐⭐</td></tr>
+  <tr><td><code>noImplicitAny</code></td><td>型が推論できない箇所でanyになることを禁止</td><td>⭐⭐⭐</td></tr>
+  <tr><td><code>strictPropertyInitialization</code></td><td>クラスのプロパティがコンストラクタで初期化されているか確認</td><td>⭐⭐</td></tr>
+  <tr><td><code>noUncheckedIndexedAccess</code></td><td>arr[0]がT|undefinedになる（配列アクセスの安全性）</td><td>⭐ 厳しいが安全</td></tr>
+</table></div>
+
+<div class="warn"><strong>⚠️ strict: false はNG</strong>strictなしのTSは「anyだらけのJS」になりがち。新規プロジェクトは必ず<code>"strict": true</code>から始める。</div>
+
+</section>
+
+<!-- S16 ツール・環境 -->
+<section id="s16">
+<div class="sec-header"><span class="s-icon">🔨</span><span class="s-title">16 ツール・環境構築</span><span class="s-desc">ディファクトスタンダードな構成</span></div>
+
+<h3>2024-2025 年のフロントエンド標準構成</h3>
+<div class="cards">
+  <div class="card ts"><div class="card-label">Vite</div><div class="card-value">ビルドツール（最速・標準）</div><div class="card-desc">Webpack の後継。TypeScriptをネイティブサポート。Vue/React/Vanilla どれでも使える</div></div>
+  <div class="card ts"><div class="card-label">@typescript-eslint</div><div class="card-value">Linter</div><div class="card-desc">TypeScript向けESLint。any使用禁止・未使用変数検出などをルール化</div></div>
+  <div class="card ts"><div class="card-label">Prettier</div><div class="card-value">フォーマッター</div><div class="card-desc">コードフォーマットをPrettierに任せ、ESLintは型・品質チェックに専念させる</div></div>
+  <div class="card green"><div class="card-label">Zod</div><div class="card-value">実行時バリデーション</div><div class="card-desc">スキーマを書くとTypeScript型が自動生成される。APIレスポンス・フォームに必須</div></div>
+  <div class="card green"><div class="card-label">Vitest</div><div class="card-value">テストフレームワーク</div><div class="card-desc">Viteと統合されたテストツール。Jest互換APIなので移行しやすい</div></div>
+  <div class="card purple"><div class="card-label">tsx / ts-node</div><div class="card-value">Node.js でTS直実行</div><div class="card-desc">スクリプト・CLIツールを TS で書いて直接実行。tscでビルドしなくていい</div></div>
+</div>
+
+<h3>プロジェクト作成コマンド（コピペ用）</h3>
+<pre><span class="cmt"># Vue 3 + TypeScript</span>
+npm create vite@latest my-app -- --template vue-ts
+cd my-app && npm install && npm run dev
+
+<span class="cmt"># React + TypeScript</span>
+npm create vite@latest my-app -- --template react-ts
+
+<span class="cmt"># Vanilla TypeScript（フレームワークなし）</span>
+npm create vite@latest my-app -- --template vanilla-ts
+
+<span class="cmt"># TypeScript スクリプトを即実行</span>
+npx tsx script.ts
+
+<span class="cmt"># 型チェックのみ（ビルドしない）</span>
+npx tsc --noEmit</pre>
+
+<h3>ESLint + TypeScript の最低限設定</h3>
+<pre><span class="cmt">// eslint.config.js（ESLint v9 flat config）</span>
+<span class="kw">import</span> tseslint <span class="kw">from</span> <span class="str">'typescript-eslint'</span>
+
+<span class="kw">export default</span> tseslint.config(
+  tseslint.configs.recommended,
+  {
+    rules: {
+      <span class="str">'@typescript-eslint/no-explicit-any'</span>: <span class="str">'error'</span>,      <span class="cmt">// any禁止</span>
+      <span class="str">'@typescript-eslint/no-unused-vars'</span>: <span class="str">'error'</span>,      <span class="cmt">// 未使用変数禁止</span>
+      <span class="str">'@typescript-eslint/prefer-nullish-coalescing'</span>: <span class="str">'warn'</span>, <span class="cmt">// || より ??</span>
+    }
+  }
+)</pre>
+
+<h3>型チェックと実行の分離（重要な概念）</h3>
+<table>
+  <tr><th>ツール</th><th>役割</th><th>型チェック</th><th>速度</th></tr>
+  <tr><td>tsc</td><td>型チェック＋.jsファイル生成</td><td>✅ する</td><td>遅め</td></tr>
+  <tr><td>Vite / esbuild</td><td>トランスパイルのみ（型を無視してJS変換）</td><td>❌ しない</td><td>爆速</td></tr>
+  <tr><td>tsx / ts-node</td><td>Node.jsで直実行</td><td>設定による</td><td>速い</td></tr>
+</table>
+<div class="warn"><strong>⚠️</strong>ViteはTypeScriptの型チェックをしない（速度重視のため）。CIで<code>tsc --noEmit</code>を必ず実行してエラーを検知する。</div>
+
+</section>
+
+<!-- ===== PART 5: フレームワーク連携 ===== -->
+<p class="part-label">Part 5 — フレームワーク連携</p>
+
+<!-- S17 実務パターン -->
+<section id="s17">
+<div class="sec-header"><span class="s-icon">💼</span><span class="s-title">17 実務パターン</span><span class="s-desc">API型定義・非同期・Result型・Zod</span></div>
+
+<h3>パターン①：APIレスポンスの型定義</h3>
+<pre><span class="kw">interface</span> <span class="type">User</span> {
+  id:         <span class="type">number</span>
+  name:       <span class="type">string</span>
+  email:      <span class="type">string</span>
+  created_at: <span class="type">string</span>  <span class="cmt">// PHPバックエンドはsnake_case</span>
+}
+
+<span class="cmt">// シンプルなfetchラッパー</span>
+<span class="kw">async function</span> <span class="fn">getUser</span>(id: <span class="type">number</span>): <span class="type">Promise</span>&lt;<span class="type">User</span>&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`/api/users/${id}`</span>)
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`HTTP ${res.status}`</span>)
+  <span class="kw">return</span> res.json() <span class="kw">as</span> <span class="type">Promise</span>&lt;<span class="type">User</span>&gt;
+  <span class="cmt">// ⚠ as は「信頼する」宣言。サーバーが正しい形を返す前提</span>
+}</pre>
+
+<h3>パターン②：Zodで実行時バリデーション（推奨）</h3>
+<pre><span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>
+
+<span class="cmt">// スキーマを書くと TypeScript 型が自動生成される</span>
+<span class="kw">const</span> UserSchema = z.object({
+  id:         z.number(),
+  name:       z.string(),
+  email:      z.string().email(),
+  created_at: z.string().datetime(),
+})
+
+<span class="kw">type</span> <span class="type">User</span> = z.infer&lt;<span class="kw">typeof</span> UserSchema&gt;  <span class="cmt">// 型を手書きしなくていい</span>
+
+<span class="kw">async function</span> <span class="fn">getUser</span>(id: <span class="type">number</span>): <span class="type">Promise</span>&lt;<span class="type">User</span>&gt; {
+  <span class="kw">const</span> res  = <span class="kw">await</span> fetch(<span class="str">`/api/users/${id}`</span>)
+  <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+  <span class="kw">return</span> UserSchema.parse(data)  <span class="cmt">// 型が違えばエラーをスロー</span>
+}
+
+<span class="cmt">// フォームバリデーション</span>
+<span class="kw">const</span> LoginSchema = z.object({
+  email:    z.string().email(<span class="str">'正しいメールアドレスを入力してください'</span>),
+  password: z.string().min(<span class="num">8</span>, <span class="str">'8文字以上で入力してください'</span>),
+})
+
+<span class="kw">const</span> result = LoginSchema.safeParse(formData)
+<span class="kw">if</span> (!result.success) {
+  <span class="kw">const</span> errors = result.error.flatten()
+  console.log(errors.fieldErrors.email)     <span class="cmt">// string[] | undefined</span>
+  console.log(errors.fieldErrors.password)
+}</pre>
+
+<h3>パターン③：Result型でエラーを安全に扱う</h3>
+<p>try/catchは「どこから例外が来るか不明」という問題がある。Result型を使うと関数の呼び出し側に「成功か失敗か」を型として強制できる。</p>
+<pre><span class="kw">type</span> <span class="type">Result</span>&lt;<span class="type">T</span>, <span class="type">E</span> = <span class="type">Error</span>&gt; =
+  | { ok: <span class="kw">true</span>;  data:  <span class="type">T</span> }
+  | { ok: <span class="kw">false</span>; error: <span class="type">E</span> }
+
+<span class="kw">async function</span> <span class="fn">safeGetUser</span>(id: <span class="type">number</span>): <span class="type">Promise</span>&lt;<span class="type">Result</span>&lt;<span class="type">User</span>&gt;&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">getUser</span>(id)
+    <span class="kw">return</span> { ok: <span class="kw">true</span>, data: user }
+  } <span class="kw">catch</span> (e) {
+    <span class="kw">return</span> { ok: <span class="kw">false</span>, error: e <span class="kw">instanceof</span> Error ? e : <span class="kw">new</span> Error(<span class="type">String</span>(e)) }
+  }
+}
+
+<span class="cmt">// 呼び出し側 — ok をチェックしないとデータにアクセスできない</span>
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">safeGetUser</span>(<span class="num">1</span>)
+<span class="kw">if</span> (result.ok) {
+  console.log(result.data.name)   <span class="cmt">// User型として使える</span>
+} <span class="kw">else</span> {
+  console.error(result.error.message)  <span class="cmt">// Error型</span>
+}</pre>
+
+<h3>パターン④：非同期の型</h3>
+<pre><span class="cmt">// Promise&lt;T&gt; — 非同期処理の戻り値型</span>
+<span class="kw">async function</span> <span class="fn">fetchUsers</span>(): <span class="type">Promise</span>&lt;<span class="type">User</span>[]&gt; { ... }
+
+<span class="cmt">// Promise.all の型推論</span>
+<span class="kw">const</span> [user, products] = <span class="kw">await</span> Promise.all([
+  <span class="fn">fetchUser</span>(<span class="num">1</span>),      <span class="cmt">// Promise&lt;User&gt;</span>
+  <span class="fn">fetchProducts</span>(),   <span class="cmt">// Promise&lt;Product[]&gt;</span>
+])
+<span class="cmt">// user: User, products: Product[] — 型が保たれる</span>
+
+<span class="cmt">// 型の抽出</span>
+<span class="kw">type</span> <span class="type">FetchedUser</span> = <span class="type">Awaited</span>&lt;<span class="type">ReturnType</span>&lt;<span class="kw">typeof</span> fetchUser&gt;&gt;  <span class="cmt">// User</span></pre>
+
+</section>
+
+<!-- S18 Vue 3 + TypeScript -->
+<section id="s18">
+<div class="sec-header"><span class="s-icon">💚</span><span class="s-title">18 Vue 3 + TypeScript</span><span class="s-desc">script setup・defineProps・ref・emit の型</span></div>
+
+<div class="tip">既存の <code>vue_typescript_guide.html</code> と合わせて読むと理解が深まる。こちらはより実務的なパターンにフォーカス。</div>
+
+<h3>script setup + defineProps の型定義</h3>
+<pre><span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="str">"ts"</span><span class="tag">&gt;</span>
+<span class="kw">import</span> { ref, computed, watch } <span class="kw">from</span> <span class="str">'vue'</span>
+
+<span class="cmt">// Props — ジェネリクス構文で型定義</span>
+<span class="kw">const</span> props = defineProps&lt;{
+  userId:  <span class="type">number</span>
+  title?:  <span class="type">string</span>       <span class="cmt">// ? = optional</span>
+  items:   <span class="type">string</span>[]
+}&gt;()
+
+<span class="cmt">// withDefaults — デフォルト値を設定</span>
+<span class="kw">const</span> props2 = withDefaults(defineProps&lt;{
+  count?: <span class="type">number</span>
+  label?: <span class="type">string</span>
+}&gt;(), {
+  count: <span class="num">0</span>,
+  label: <span class="str">'件'</span>,
+})
+
+<span class="cmt">// Emits — イベントの型定義（関数オーバーロード構文・旧スタイル）</span>
+<span class="kw">const</span> emit = defineEmits&lt;{
+  (e: <span class="str">'update:modelValue'</span>, value: <span class="type">string</span>): <span class="kw">void</span>
+  (e: <span class="str">'submit'</span>, data: { name: <span class="type">string</span>; email: <span class="type">string</span> }): <span class="kw">void</span>
+  (e: <span class="str">'close'</span>): <span class="kw">void</span>
+}&gt;()
+
+<span class="cmt">// Vue 3.3+ 推奨：オブジェクト構文（より簡潔）</span>
+<span class="kw">const</span> emit = defineEmits&lt;{
+  <span class="str">'update:modelValue'</span>: [value: <span class="type">string</span>]
+  <span class="str">'submit'</span>: [data: { name: <span class="type">string</span>; email: <span class="type">string</span> }]
+  <span class="str">'close'</span>: []
+}&gt;()
+
+<span class="cmt">// ref — 型パラメータで明示</span>
+<span class="kw">const</span> name    = ref&lt;<span class="type">string</span>&gt;(<span class="str">''</span>)           <span class="cmt">// Ref&lt;string&gt;</span>
+<span class="kw">const</span> user    = ref&lt;<span class="type">User</span> | <span class="type">null</span>&gt;(<span class="kw">null</span>)   <span class="cmt">// Ref&lt;User | null&gt;</span>
+<span class="kw">const</span> loading = ref(<span class="kw">false</span>)               <span class="cmt">// 推論: Ref&lt;boolean&gt;</span>
+
+<span class="cmt">// computed</span>
+<span class="kw">const</span> displayName = computed&lt;<span class="type">string</span>&gt;(() =>
+  user.value?.name ?? <span class="str">'未ログイン'</span>
+)
+
+<span class="cmt">// Event handlers — DOM イベントの型</span>
+<span class="kw">function</span> <span class="fn">handleInput</span>(e: Event): <span class="kw">void</span> {
+  <span class="kw">const</span> target = e.target <span class="kw">as</span> <span class="type">HTMLInputElement</span>
+  name.value = target.value
+}
+<span class="tag">&lt;/script&gt;</span></pre>
+
+<h3>Composables（Vue 3 のカスタムフック）の型</h3>
+<pre><span class="cmt">// useUser.ts</span>
+<span class="kw">import</span> { ref, onMounted } <span class="kw">from</span> <span class="str">'vue'</span>
+<span class="kw">import type</span> { Ref } <span class="kw">from</span> <span class="str">'vue'</span>
+
+<span class="kw">export function</span> <span class="fn">useUser</span>(id: <span class="type">number</span>) {
+  <span class="kw">const</span> user    = ref&lt;<span class="type">User</span> | <span class="type">null</span>&gt;(<span class="kw">null</span>)
+  <span class="kw">const</span> loading = ref(<span class="kw">true</span>)
+  <span class="kw">const</span> error   = ref&lt;<span class="type">string</span> | <span class="type">null</span>&gt;(<span class="kw">null</span>)
+
+  onMounted(<span class="kw">async</span> () => {
+    <span class="kw">try</span> {
+      user.value = <span class="kw">await</span> <span class="fn">getUser</span>(id)
+    } <span class="kw">catch</span> (e) {
+      error.value = <span class="str">'取得失敗'</span>
+    } <span class="kw">finally</span> {
+      loading.value = <span class="kw">false</span>
+    }
+  })
+
+  <span class="kw">return</span> { user, loading, error }
+  <span class="cmt">// 戻り値は { user: Ref&lt;User|null&gt;, loading: Ref&lt;boolean&gt;, error: Ref&lt;string|null&gt; }</span>
+}</pre>
+
+</section>
+
+<!-- S19 React + TypeScript -->
+<section id="s19">
+<div class="sec-header"><span class="s-icon">⚛️</span><span class="s-title">19 React + TypeScript</span><span class="s-desc">FC・useState・イベント型・カスタムフック</span></div>
+
+<h3>コンポーネントの型定義</h3>
+<pre><span class="kw">import</span> { FC, useState, useRef, useCallback, ReactNode } <span class="kw">from</span> <span class="str">'react'</span>
+
+<span class="cmt">// Props の型定義</span>
+<span class="kw">interface</span> <span class="type">ButtonProps</span> {
+  label:     <span class="type">string</span>
+  onClick:   () => <span class="kw">void</span>
+  disabled?: <span class="type">boolean</span>
+  variant?:  <span class="str">'primary'</span> | <span class="str">'secondary'</span> | <span class="str">'danger'</span>
+  children?: <span class="type">ReactNode</span>   <span class="cmt">// JSXコンテンツを受け取る場合</span>
+}
+
+<span class="cmt">// FC&lt;Props&gt; でコンポーネントを定義</span>
+<span class="kw">const</span> Button: <span class="type">FC</span>&lt;<span class="type">ButtonProps</span>&gt; = ({
+  label, onClick, disabled = <span class="kw">false</span>, variant = <span class="str">'primary'</span>
+}) => {
+  <span class="kw">return</span> (
+    &lt;button
+      onClick={onClick}
+      disabled={disabled}
+      className={<span class="str">`btn btn-${variant}`</span>}
+    &gt;
+      {label}
+    &lt;/button&gt;
+  )
+}
+
+<span class="kw">export default</span> Button</pre>
+
+<h3>Hooks の型</h3>
+<pre><span class="cmt">// useState — ジェネリクスで型を指定</span>
+<span class="kw">const</span> [count, setCount]   = useState&lt;<span class="type">number</span>&gt;(<span class="num">0</span>)
+<span class="kw">const</span> [user, setUser]     = useState&lt;<span class="type">User</span> | <span class="type">null</span>&gt;(<span class="kw">null</span>)
+<span class="kw">const</span> [items, setItems]   = useState&lt;<span class="type">string</span>[]&gt;([])
+<span class="cmt">// 初期値から推論される場合は不要</span>
+<span class="kw">const</span> [name, setName]     = useState(<span class="str">''</span>)      <span class="cmt">// string と推論</span>
+<span class="kw">const</span> [loading, setLoading] = useState(<span class="kw">false</span>)  <span class="cmt">// boolean と推論</span>
+
+<span class="cmt">// useRef — DOM要素とミュータブル値</span>
+<span class="kw">const</span> inputRef  = useRef&lt;<span class="type">HTMLInputElement</span>&gt;(<span class="kw">null</span>)    <span class="cmt">// DOM要素</span>
+<span class="kw">const</span> timerRef  = useRef&lt;<span class="type">ReturnType</span>&lt;<span class="kw">typeof</span> setTimeout&gt;&gt;() <span class="cmt">// タイマーID</span>
+
+<span class="cmt">// 使い方</span>
+inputRef.current?.focus()  <span class="cmt">// null チェックが必要</span></pre>
+
+<h3>イベントの型（頻出）</h3>
+<pre><span class="cmt">// input / textarea の onChange</span>
+<span class="kw">function</span> <span class="fn">handleChange</span>(e: React.<span class="type">ChangeEvent</span>&lt;<span class="type">HTMLInputElement</span>&gt;): <span class="kw">void</span> {
+  console.log(e.target.value)
+}
+
+<span class="cmt">// form の onSubmit</span>
+<span class="kw">function</span> <span class="fn">handleSubmit</span>(e: React.<span class="type">FormEvent</span>&lt;<span class="type">HTMLFormElement</span>&gt;): <span class="kw">void</span> {
+  e.preventDefault()
+}
+
+<span class="cmt">// button の onClick</span>
+<span class="kw">function</span> <span class="fn">handleClick</span>(e: React.<span class="type">MouseEvent</span>&lt;<span class="type">HTMLButtonElement</span>&gt;): <span class="kw">void</span> {
+  console.log(e.currentTarget)
+}
+
+<span class="cmt">// select の onChange</span>
+<span class="kw">function</span> <span class="fn">handleSelect</span>(e: React.<span class="type">ChangeEvent</span>&lt;<span class="type">HTMLSelectElement</span>&gt;): <span class="kw">void</span> {
+  console.log(e.target.value)
+}</pre>
+
+<h3>カスタムフックの型</h3>
+<pre><span class="cmt">// useLocalStorage.ts</span>
+<span class="kw">function</span> <span class="fn">useLocalStorage</span>&lt;<span class="type">T</span>&gt;(
+  key: <span class="type">string</span>,
+  initialValue: <span class="type">T</span>
+): [<span class="type">T</span>, (<span class="type">value</span>: <span class="type">T</span>) => <span class="kw">void</span>] {
+  <span class="kw">const</span> [stored, setStored] = useState&lt;<span class="type">T</span>&gt;(() => {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> item = localStorage.getItem(key)
+      <span class="kw">return</span> item ? (JSON.parse(item) <span class="kw">as</span> <span class="type">T</span>) : initialValue
+    } <span class="kw">catch</span> {
+      <span class="kw">return</span> initialValue
+    }
+  })
+
+  <span class="kw">const</span> setValue = useCallback((value: <span class="type">T</span>) => {
+    setStored(value)
+    localStorage.setItem(key, JSON.stringify(value))
+  }, [key])
+
+  <span class="kw">return</span> [stored, setValue]  <span class="cmt">// [T, (value: T) => void] のタプル</span>
+}</pre>
+
+</section>
+
+<!-- ===== PART 6: バックエンド連携 ===== -->
+<p class="part-label">Part 6 — バックエンド連携</p>
+
+<!-- S20 PHP経験者向け -->
+<section id="s20">
+<div class="sec-header"><span class="s-icon">🐘</span><span class="s-title">20 PHP経験者向け対応表</span><span class="s-desc">PHPの概念をTypeScriptで読み替える</span></div>
+
+<p>PHPの型・クラス・インターフェースの概念はTypeScriptとほぼ対応している。「PHPで書いてたこれ、TSではどう書く？」をまとめた。</p>
+
+<h3>型の対応</h3>
+<table>
+  <tr><th>PHP</th><th>TypeScript</th><th>備考</th></tr>
+  <tr><td><code>string</code></td><td><code>string</code></td><td>同じ</td></tr>
+  <tr><td><code>int</code> / <code>float</code></td><td><code>number</code></td><td>TSは整数・小数を区別しない</td></tr>
+  <tr><td><code>bool</code></td><td><code>boolean</code></td><td>同じ</td></tr>
+  <tr><td><code>array</code></td><td><code>T[]</code> / <code>Record&lt;string, T&gt;</code></td><td>配列かマップかで使い分け</td></tr>
+  <tr><td><code>?string</code>（nullable）</td><td><code>string | null</code></td><td>TSはUnion型で表現</td></tr>
+  <tr><td><code>mixed</code></td><td><code>unknown</code></td><td>anyより安全なunknownを使う</td></tr>
+  <tr><td><code>void</code></td><td><code>void</code></td><td>同じ</td></tr>
+  <tr><td><code>never</code>（8.1+）</td><td><code>never</code></td><td>ほぼ同じ</td></tr>
+</table>
+
+<h3>型注釈の書き方比較</h3>
+<div class="lang-compare">
+<div class="lbox php">
+  <div class="lbox-title">🐘 PHP</div>
+  <pre><span class="php-kw">function</span> <span class="fn">greet</span>(<span class="type">string</span> $name, <span class="type">int</span> $age): <span class="type">string</span>
+{
+    <span class="php-kw">return</span> <span class="str">"こんにちは {$name}（{$age}歳）"</span>;
+}
+
+<span class="php-kw">function</span> <span class="fn">findUser</span>(<span class="type">int</span> $id): ?<span class="type">User</span>
+{
+    <span class="cmt">// null または User を返す</span>
+}</pre>
+</div>
+<div class="lbox ts">
+  <div class="lbox-title">🔷 TypeScript</div>
+  <pre><span class="kw">function</span> <span class="fn">greet</span>(name: <span class="type">string</span>, age: <span class="type">number</span>): <span class="type">string</span> {
+  <span class="kw">return</span> <span class="str">`こんにちは ${name}（${age}歳）`</span>
+}
+
+<span class="kw">function</span> <span class="fn">findUser</span>(id: <span class="type">number</span>): <span class="type">User</span> | <span class="type">null</span> {
+  <span class="cmt">// null または User を返す</span>
+}</pre>
+</div>
+</div>
+
+<h3>クラスの対応</h3>
+<div class="lang-compare">
+<div class="lbox php">
+  <div class="lbox-title">🐘 PHP</div>
+  <pre><span class="php-kw">class</span> <span class="type">User</span>
+{
+    <span class="php-kw">public readonly</span> <span class="type">int</span> $id;
+    <span class="php-kw">protected</span> <span class="type">string</span> $name;
+    <span class="php-kw">private</span> <span class="type">string</span> $password;
+
+    <span class="php-kw">public function</span> <span class="fn">__construct</span>(
+        <span class="type">int</span> $id,
+        <span class="type">string</span> $name,
+        <span class="type">string</span> $password
+    ) {
+        $this->id       = $id;
+        $this->name     = $name;
+        $this->password = $password;
+    }
+}</pre>
+</div>
+<div class="lbox ts">
+  <div class="lbox-title">🔷 TypeScript</div>
+  <pre><span class="kw">class</span> <span class="type">User</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">public readonly</span> id:       <span class="type">number</span>,
+    <span class="kw">protected</span>        name:     <span class="type">string</span>,
+    <span class="kw">private</span>          password: <span class="type">string</span>,
+  ) {}
+  <span class="cmt">// 省略記法：constructor 内で自動的に</span>
+  <span class="cmt">// this.id = id 等が行われる</span>
+}</pre>
+</div>
+</div>
+
+<h3>PHPバックエンド → TSフロントエンドの型連携パターン</h3>
+<pre><span class="cmt">// Laravel が返す JSON レスポンス例</span>
+<span class="cmt">// {"id": 1, "name": "山田太郎", "email": "yamada@example.com", "created_at": "2024-01-01T00:00:00Z"}</span>
+
+<span class="cmt">// ① 手書きで型定義（小規模プロジェクト向け）</span>
+<span class="kw">interface</span> <span class="type">UserResponse</span> {
+  id:         <span class="type">number</span>
+  name:       <span class="type">string</span>
+  email:      <span class="type">string</span>
+  created_at: <span class="type">string</span>   <span class="cmt">// PHP/Laravel は snake_case</span>
+}
+
+<span class="cmt">// ② OpenAPI から自動生成（中〜大規模向け）</span>
+<span class="cmt">// Laravel: l5-swagger などで openapi.yaml を生成</span>
+<span class="cmt">// TS側: openapi-typescript で型ファイルを自動生成</span>
+<span class="cmt">// $ npx openapi-typescript ./openapi.yaml -o ./src/types/api.d.ts</span>
+
+<span class="cmt">// ③ Zod + camelCase 変換（推奨パターン）</span>
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>
+
+<span class="kw">const</span> UserSchema = z.object({
+  id:         z.number(),
+  name:       z.string(),
+  email:      z.string().email(),
+  created_at: z.string(),
+}).transform(data => ({   <span class="cmt">// snake_case → camelCase 変換</span>
+  id:        data.id,
+  name:      data.name,
+  email:     data.email,
+  createdAt: data.created_at,  <span class="cmt">// フロントはcamelCase</span>
+}))
+
+<span class="kw">type</span> <span class="type">User</span> = z.infer&lt;<span class="kw">typeof</span> UserSchema&gt;</pre>
+
+<h3>declare strict_types ↔ tsconfig strict の対応</h3>
+<div class="lang-compare">
+<div class="lbox php">
+  <div class="lbox-title">🐘 PHP</div>
+  <pre><span class="php-kw">declare</span>(strict_types=<span class="num">1</span>);
+<span class="cmt">// ファイル先頭に書く</span>
+<span class="cmt">// 型の自動変換を禁止</span>
+<span class="cmt">// 例: int引数にstringを渡すとエラー</span></pre>
+</div>
+<div class="lbox ts">
+  <div class="lbox-title">🔷 TypeScript</div>
+  <pre><span class="cmt">// tsconfig.json</span>
+{
+  <span class="str">"compilerOptions"</span>: {
+    <span class="str">"strict"</span>: <span class="kw">true</span>
+  }
+}
+<span class="cmt">// プロジェクト全体に適用される</span>
+<span class="cmt">// 暗黙的anyの禁止・null安全など</span></pre>
+</div>
+</div>
+
+</section>
+
+<!-- ===== PART 7: レベルガイド ===== -->
+<p class="part-label">Part 7 — レベルガイド</p>
+
+<!-- S21 レベルガイド -->
+<section id="s21">
+<div class="sec-header"><span class="s-icon">🎯</span><span class="s-title">21 どこまでできれば「TypeScript できる」と言える？</span><span class="s-desc">実務レベルの定義</span></div>
+
+<div class="level-grid">
+  <div class="lv-card lv1">
+    <div class="lv-badge">Lv.1 入門</div>
+    <h4>型の存在を知っている</h4>
+    <ul>
+      <li>string / number / boolean が書ける</li>
+      <li>型推論を知っている</li>
+      <li>interface でオブジェクト型が書ける</li>
+      <li>?. と ?? が使える</li>
+      <li>関数の引数・戻り値型が書ける</li>
+    </ul>
+  </div>
+  <div class="lv-card lv2">
+    <div class="lv-badge">Lv.2 基礎完了</div>
+    <h4>型システムを使える</h4>
+    <ul>
+      <li>Union型・optional型を使いこなせる</li>
+      <li>Partial / Pick / Omit / Record を知っている</li>
+      <li>ジェネリクスを読める</li>
+      <li>tsconfig の strict: true が何をするか知っている</li>
+      <li>anyを避けようとしている</li>
+    </ul>
+  </div>
+  <div class="lv-card lv3">
+    <div class="lv-badge">Lv.3 実務OK ✅</div>
+    <h4>チーム開発で通用する</h4>
+    <ul>
+      <li>ジェネリクスを自分で書ける</li>
+      <li>型ガードを書ける</li>
+      <li>API型定義を自分で設計できる</li>
+      <li>Zod・Result型などの実務パターンを使える</li>
+      <li>unknownを使いこなせる</li>
+      <li>Vue/React と組み合わせて問題なく書ける</li>
+      <li>tsconfig を理解して調整できる</li>
+    </ul>
+  </div>
+  <div class="lv-card lv4">
+    <div class="lv-badge">Lv.4 上級</div>
+    <h4>型で設計できる</h4>
+    <ul>
+      <li>Mapped Types を書ける</li>
+      <li>Template Literal Types を活用できる</li>
+      <li>Conditional Types と infer を使える</li>
+      <li>.d.ts を書ける</li>
+      <li>Declaration Merging でライブラリを拡張できる</li>
+      <li>型のパフォーマンスを意識できる</li>
+    </ul>
+  </div>
+</div>
+
+<h3>「実務でTypeScriptができる」とは Lv.3 のこと</h3>
+<p>採用面接やチームへの自己紹介で「TypeScriptできます」と言っていいのは Lv.3 から。Lv.4 は「型パズルが得意」であり、業務コードでは必須ではない（使いすぎるとむしろ可読性が下がることも）。</p>
+
+<h3>Lv.3 到達チェックリスト</h3>
+<ul class="checklist">
+  <li><span class="ch">☐</span> <code>strict: true</code> の tsconfig でエラーなくコードが書ける</li>
+  <li><span class="ch">☐</span> anyを使わずに unknown + 型ガードでAPIレスポンスを扱える</li>
+  <li><span class="ch">☐</span> <code>ApiResponse&lt;T&gt;</code> のようなジェネリクスを自分で設計できる</li>
+  <li><span class="ch">☐</span> Discriminated Union でステート管理ができる（loading / success / error）</li>
+  <li><span class="ch">☐</span> Pick / Omit / Partial を使って型を使い回せる</li>
+  <li><span class="ch">☐</span> Vue の defineProps / defineEmits に型をつけられる（または React の FC&lt;Props&gt;）</li>
+  <li><span class="ch">☐</span> エラーハンドリングで <code>error instanceof Error</code> を使って型を絞れる</li>
+  <li><span class="ch">☐</span> Zod でAPIレスポンスをバリデートして型を得られる</li>
+</ul>
+
+<h3>よくある落とし穴</h3>
+<ul class="flist">
+  <li>
+    <span class="flist-icon">❌</span>
+    <div class="flist-body">
+      <div class="flist-label">NG</div>
+      <div class="flist-title">「型が合わないから any にする」</div>
+      <div class="flist-desc">→ <code>unknown</code> + 型ガード、またはジェネリクスで解決を試みる</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">❌</span>
+    <div class="flist-body">
+      <div class="flist-label">NG</div>
+      <div class="flist-title">「<code>!</code>（non-null assertion）を多用する」</div>
+      <div class="flist-desc">→ <code>if</code> 文で型ガードするのが基本。どうしても必要な場合のみ <code>as</code> か <code>!</code>（どちらも実行時保証なし）</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">❌</span>
+    <div class="flist-body">
+      <div class="flist-label">NG</div>
+      <div class="flist-title">「全部 <code>interface</code> で書こうとする」</div>
+      <div class="flist-desc">→ Union型が必要なら <code>type</code> を使う</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">❌</span>
+    <div class="flist-body">
+      <div class="flist-label">NG</div>
+      <div class="flist-title">「型ファイルを別ディレクトリにまとめる」</div>
+      <div class="flist-desc">→ 使う場所の近くに置く（凝集度が上がる）</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">❌</span>
+    <div class="flist-body">
+      <div class="flist-label">NG</div>
+      <div class="flist-title">「ジェネリクスを多用して型が複雑になる」</div>
+      <div class="flist-desc">→ シンプルな型の方が保守しやすい。Lv.4 の技術は必要なときだけ</div>
+    </div>
+  </li>
+</ul>
+
+<h3>次に学ぶなら</h3>
+<ul class="flist">
+  <li>
+    <span class="flist-icon">✅</span>
+    <div class="flist-body">
+      <div class="flist-label">Zod 深掘り</div>
+      <div class="flist-title">バリデーション設計の完成形</div>
+      <div class="flist-desc">フォーム・APIレスポンス全体をZodで管理するパターン。<code>z.discriminatedUnion</code>・<code>z.transform</code>・<code>superRefine</code>など。型とバリデーションを一元管理できる</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🔗</span>
+    <div class="flist-body">
+      <div class="flist-label">tRPC</div>
+      <div class="flist-title">バックエンドとの型を自動共有</div>
+      <div class="flist-desc">TypeScript同士（Node.js バックエンド + TS フロント）なら型を自動共有できる。APIの型定義を二重に書く必要がなくなる。PHPバックエンドの場合は対象外だが、フルTSの場合は有力候補</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🗄️</span>
+    <div class="flist-body">
+      <div class="flist-label">Prisma / Drizzle</div>
+      <div class="flist-title">型安全ORM — DBスキーマから型を自動生成</div>
+      <div class="flist-desc">DBのテーブル定義からTypeScript型を自動生成。バックエンドをNode+TSで書く場合の必須ツール。クエリの結果に型が付くため、PHPのような手動型管理が不要になる</div>
+    </div>
+  </li>
+</ul>
+
+</section>
+
+<!-- ===== PART 8: 演習 ===== -->
+<p class="part-label">Part 8 — 演習・実践プロジェクト</p>
+
+<section id="s22">
+<div class="sec-header"><span class="s-icon">✏️</span><span class="s-title">22 演習問題 &amp; 実践プロジェクト案</span><span class="s-desc">読んだ後に手を動かす</span></div>
+
+<p>読むだけでは Lv.2 止まりになりやすい。以下の演習を順番にやると Lv.3 に到達できる。</p>
+
+<h3>演習①：型定義を手書きする（30分）</h3>
+<p>以下のJSONに対してTypeScriptの型を手書きしてみる。</p>
+<pre><span class="cmt">// このJSONに型をつけろ</span>
+<span class="kw">const</span> response = {
+  ok: <span class="kw">true</span>,
+  data: {
+    id: <span class="num">1</span>,
+    name: <span class="str">'山田太郎'</span>,
+    email: <span class="str">'yamada@example.com'</span>,
+    role: <span class="str">'admin'</span>,
+    posts: [
+      { id: <span class="num">1</span>, title: <span class="str">'初投稿'</span>, published: <span class="kw">true</span> },
+      { id: <span class="num">2</span>, title: <span class="str">'2本目'</span>,  published: <span class="kw">false</span> },
+    ]
+  }
+}
+
+<span class="cmt">// ↓ ここに型を書いてみる</span>
+<span class="kw">interface</span> <span class="type">Post</span>     { <span class="cmt">/* ... */</span> }
+<span class="kw">interface</span> <span class="type">User</span>     { <span class="cmt">/* ... */</span> }
+<span class="kw">type</span>      <span class="type">Response</span> = <span class="cmt">/* ... */</span></pre>
+
+<h3>演習②：ジェネリクスで汎用関数を書く（1時間）</h3>
+<pre><span class="cmt">// 以下の関数をジェネリクスで書き直す</span>
+
+<span class="cmt">// Before: any だらけ</span>
+<span class="kw">function</span> <span class="fn">filterBy</span>(items: <span class="type">any</span>[], key: <span class="type">string</span>, value: <span class="type">any</span>): <span class="type">any</span>[] {
+  <span class="kw">return</span> items.filter(item => item[key] === value)
+}
+
+<span class="cmt">// After: ジェネリクスで書く</span>
+<span class="cmt">// 目標: filterBy(users, 'role', 'admin') が User[] を返すようにする</span>
+<span class="kw">function</span> <span class="fn">filterBy</span>&lt;<span class="type">T</span>, <span class="type">K</span> <span class="kw">extends</span> <span class="kw">keyof</span> <span class="type">T</span>&gt;(
+  items: <span class="type">T</span>[],
+  key: <span class="type">K</span>,
+  value: <span class="type">T</span>[<span class="type">K</span>]
+): <span class="type">T</span>[] {
+  <span class="kw">return</span> items.filter(item => item[key] === value)
+}
+
+<span class="cmt">// 動作確認</span>
+<span class="kw">const</span> admins = <span class="fn">filterBy</span>(users, <span class="str">'role'</span>, <span class="str">'admin'</span>)
+<span class="cmt">// admins: User[] ← 型が保たれる</span>
+<span class="cmt">// filterBy(users, 'role', 123) ← エラー（roleはstringなのでnumberはNG）</span></pre>
+
+<h3>演習③：Zodスキーマを設計する（1時間）</h3>
+<pre><span class="cmt">// LaravelのAPIが返すレスポンスに対してZodスキーマを書く</span>
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>
+
+<span class="cmt">// 課題: 以下の仕様でスキーマを書いてみる</span>
+<span class="cmt">// - id: 正の整数</span>
+<span class="cmt">// - name: 1〜50文字の文字列</span>
+<span class="cmt">// - email: メールアドレス形式</span>
+<span class="cmt">// - role: 'user' | 'admin' | 'viewer' のどれか</span>
+<span class="cmt">// - age: 0〜150の数値（省略可）</span>
+
+<span class="kw">const</span> UserSchema = z.object({
+  id:    z.number().int().positive(),
+  name:  z.string().min(<span class="num">1</span>).max(<span class="num">50</span>),
+  email: z.string().email(),
+  role:  z.enum([<span class="str">'user'</span>, <span class="str">'admin'</span>, <span class="str">'viewer'</span>]),
+  age:   z.number().min(<span class="num">0</span>).max(<span class="num">150</span>).optional(),
+})
+
+<span class="kw">type</span> <span class="type">User</span> = z.infer&lt;<span class="kw">typeof</span> UserSchema&gt;
+<span class="cmt">// interface を手書きしなくていい — スキーマが型になる</span>
+
+<span class="cmt">// エラーになるケースを試してみる</span>
+UserSchema.parse({ id: <span class="str">'abc'</span>, name: <span class="str">''</span>, email: <span class="str">'not-email'</span>, role: <span class="str">'superuser'</span> })
+<span class="cmt">// ZodError: 4つのエラーが出る</span></pre>
+
+<h3>実践プロジェクト案（Lv.3 到達のための最短ルート）</h3>
+<ul class="flist">
+  <li>
+    <span class="flist-icon">🥉</span>
+    <div class="flist-body">
+      <div class="flist-label">初級（1〜2日）</div>
+      <div class="flist-title">既存のJSファイルを1つTSに移植する</div>
+      <div class="flist-desc">手元のJSプロジェクトの1ファイルだけ .ts にして <code>strict: true</code> でエラーを全部直す。エラーを直す過程で型の使い方が身につく</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🥈</span>
+    <div class="flist-body">
+      <div class="flist-label">中級（1週間）</div>
+      <div class="flist-title">Vue または React で小さなCRUDアプリを作る</div>
+      <div class="flist-desc">ユーザー一覧・詳細・編集の3画面。fetchでAPIを叩いてZodでバリデート。これが完成すればLv.3の大半は達成</div>
+    </div>
+  </li>
+  <li>
+    <span class="flist-icon">🥇</span>
+    <div class="flist-body">
+      <div class="flist-label">上級（2〜4週間）</div>
+      <div class="flist-title">PHPバックエンド（Laravel）+ TSフロントエンドの連携</div>
+      <div class="flist-desc">LaravelでAPIを作り、openapi-typescriptで型を自動生成してフロントで使う。本物の「型安全フルスタック」が体験できる</div>
+    </div>
+  </li>
+</ul>
+
+<div class="tip">「完璧に理解してから作る」より「エラーをつぶしながら作る」の方が型の感覚は身につく。まず動かすことを優先して。</div>
+
+</section>
+
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.toc a').forEach(link => {
+  link.addEventListener('click', () => {
+    const id = link.getAttribute('href')?.slice(1)
+    if (!id) return
+    const target = document.getElementById(id)
+    if (target) {
+      const details = target.querySelector('details.sec')
+      if (details) details.open = true
+    }
+  })
+})
+</script>
+
+</body>
+</html>

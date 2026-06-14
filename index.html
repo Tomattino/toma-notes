@@ -21,6 +21,7 @@
     --backend: #c084fc;
     --tool:    #60c8f0;
     --planned: #444760;
+    --infra:   #f97316;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,9 +88,13 @@
   .toc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .toc-count { margin-left: auto; font-size: 11px; color: var(--muted); }
 
-  .section { margin-bottom: 12px; }
-
-  .section-toggle {
+  /* details/summary ベースのセクション */
+  details.section {
+    margin-bottom: 12px;
+  }
+  details.section > summary {
+    list-style: none;
+    -webkit-appearance: none;
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -100,8 +105,13 @@
     transition: border-color 0.15s;
     color: var(--text); text-align: left;
   }
-  .section-toggle:hover { background: #1c1f32; }
-  .section-toggle.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; }
+  details.section > summary::-webkit-details-marker { display: none; }
+  details.section > summary:hover { background: #1c1f32; }
+  details.section[open] > summary {
+    border-radius: 10px 10px 0 0;
+    border-bottom-color: transparent;
+  }
+  details.section[open] > summary .chevron { transform: rotate(180deg); }
 
   .section-icon {
     width: 28px; height: 28px; border-radius: 6px;
@@ -115,17 +125,14 @@
   }
   .section-meta { font-size: 11px; color: var(--muted); }
   .chevron { font-size: 11px; color: var(--muted); transition: transform 0.2s; }
-  .section-toggle.open .chevron { transform: rotate(180deg); }
 
   .section-body {
-    display: none;
     background: var(--surface);
     border: 1px solid var(--border);
     border-top: none;
     border-radius: 0 0 10px 10px;
     padding: 4px 0 8px;
   }
-  .section-body.open { display: block; }
 
   .list { display: flex; flex-direction: column; }
   .list-item {
@@ -152,6 +159,7 @@
   .list-item.web::before     { background: var(--web); }
   .list-item.backend::before { background: var(--backend); }
   .list-item.tool::before    { background: var(--tool); }
+  .list-item.infra::before   { background: var(--infra); }
 
   .level {
     font-size: 10px; font-weight: 700;
@@ -186,6 +194,7 @@
     <div class="legend-item"><div class="legend-dot" style="background:var(--web)"></div> Web フロント</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--backend)"></div> バックエンド</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--tool)"></div> ツール / その他</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--infra)"></div> 資格 / インフラ</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--planned)"></div> 作成予定</div>
   </div>
 
@@ -198,18 +207,19 @@
       <a href="#web"     class="toc-item"><div class="toc-dot" style="background:var(--web)"></div>Web フロント<span class="toc-count">1件</span></a>
       <a href="#backend" class="toc-item"><div class="toc-dot" style="background:var(--backend)"></div>バックエンド<span class="toc-count">1件</span></a>
       <a href="#tool"    class="toc-item"><div class="toc-dot" style="background:var(--tool)"></div>ツール / その他<span class="toc-count">3件</span></a>
+      <a href="#infra"   class="toc-item"><div class="toc-dot" style="background:var(--infra)"></div>資格 / インフラ<span class="toc-count">4件</span></a>
     </div>
   </nav>
 
   <!-- SQL -->
-  <div class="section" id="sql">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="sql" open>
+    <summary>
       <div class="section-icon" style="background:#0f2d1e">🗄️</div>
       <span class="section-title">SQL / データベース</span>
       <span class="section-meta">完成 4件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
         <a href="sql_guide_v12.html" class="list-item sql">
           <span class="level level-intro">入門</span>
@@ -233,17 +243,17 @@
         </a>
       </div>
     </div>
-  </div>
+  </details>
 
   <!-- 設計 -->
-  <div class="section" id="design">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="design" open>
+    <summary>
       <div class="section-icon" style="background:#2d1f07">📐</div>
       <span class="section-title">設計</span>
       <span class="section-meta">完成 1件 / 予定 1件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
         <a href="er_guide_v5.html" class="list-item db">
           <span class="level level-intro">入門</span>
@@ -256,17 +266,17 @@
         </div>
       </div>
     </div>
-  </div>
+  </details>
 
   <!-- Vue / TS -->
-  <div class="section" id="vue">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="vue" open>
+    <summary>
       <div class="section-icon" style="background:#0d2318">⚡</div>
       <span class="section-title">Vue / TypeScript</span>
-      <span class="section-meta">完成 2件 / 予定 1件</span>
+      <span class="section-meta">完成 3件 / 予定 1件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
         <a href="vue_guide.html" class="list-item vue">
           <span class="level level-intro">入門</span>
@@ -278,59 +288,76 @@
           <div class="item-body"><div class="item-title">TypeScript + Vue</div><div class="item-desc">型定義・props型・Pinia型定義</div></div>
           <span class="item-ver">v1</span>
         </a>
+        <a href="typescript_guide_v1.html" class="list-item vue">
+          <span class="level level-mid">中級</span>
+          <div class="item-body"><div class="item-title">TypeScript 完全ガイド</div><div class="item-desc">基礎から実務まで — Vue/React/PHP連携・ベストプラクティス・レベルガイド付き</div></div>
+          <span class="item-ver">v1</span>
+        </a>
+        <div class="list-item vue planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">Vue エコシステム</div><div class="item-desc">Vite・Vitest・型安全Pinia・Nuxt基礎</div></div>
+        </div>
         <div class="list-item vue planned">
           <span class="level level-planned">予定</span>
           <div class="item-body"><div class="item-title">React 基礎</div><div class="item-desc">Vueと比較しながら学ぶ</div></div>
         </div>
       </div>
     </div>
-  </div>
+  </details>
 
   <!-- Web フロント -->
-  <div class="section" id="web">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="web" open>
+    <summary>
       <div class="section-icon" style="background:#2d0f1c">🎨</div>
       <span class="section-title">Web フロント</span>
       <span class="section-meta">予定 1件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
         <div class="list-item web planned">
           <span class="level level-planned">予定</span>
           <div class="item-body"><div class="item-title">CSS 基礎〜実践</div><div class="item-desc">レイアウト・アニメーション・設計手法</div></div>
         </div>
+        <div class="list-item web planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">Webデザイン基礎</div><div class="item-desc">有名サイトの探し方・デザイン分析・スクショ活用・実装への落とし込み</div></div>
+        </div>
       </div>
     </div>
-  </div>
+  </details>
 
   <!-- バックエンド -->
-  <div class="section" id="backend">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="backend" open>
+    <summary>
       <div class="section-icon" style="background:#1e0f30">🖥️</div>
       <span class="section-title">バックエンド</span>
       <span class="section-meta">予定 1件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
+        <div class="list-item backend planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">Node.js</div><div class="item-desc">基礎〜Express・API作成</div></div>
+        </div>
         <div class="list-item backend planned">
           <span class="level level-planned">予定</span>
           <div class="item-body"><div class="item-title">PHP / Laravel</div><div class="item-desc">基礎〜複数ロールログイン・課金・Google認証</div></div>
         </div>
       </div>
     </div>
-  </div>
+  </details>
 
   <!-- ツール / その他 -->
-  <div class="section" id="tool">
-    <button class="section-toggle open" onclick="toggleSection(this)">
+  <details class="section" id="tool" open>
+    <summary>
       <div class="section-icon" style="background:#0a2030">🛠️</div>
       <span class="section-title">ツール / その他</span>
-      <span class="section-meta">完成 1件 / 予定 2件</span>
+      <span class="section-meta">完成 1件 / 予定 3件</span>
       <span class="chevron">▼</span>
-    </button>
-    <div class="section-body open">
+    </summary>
+    <div class="section-body">
       <div class="list">
         <a href="json_yaml_guide.html" class="list-item tool">
           <span class="level level-intro">入門</span>
@@ -345,29 +372,49 @@
           <span class="level level-planned">予定</span>
           <div class="item-body"><div class="item-title">SEO</div><div class="item-desc">SEO基礎・実装ガイド</div></div>
         </div>
+        <div class="list-item tool planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">Linux 基礎</div><div class="item-desc">コマンド・パーミッション・SSH・プロセス管理</div></div>
+        </div>
       </div>
     </div>
-  </div>
+  </details>
+
+  <!-- 資格 / インフラ -->
+  <details class="section" id="infra">
+    <summary>
+      <div class="section-icon" style="background:#1a1005">🏆</div>
+      <span class="section-title">資格 / インフラ</span>
+      <span class="section-meta">予定 4件</span>
+      <span class="chevron">▼</span>
+    </summary>
+    <div class="section-body">
+      <div class="list">
+        <div class="list-item infra planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">CCNA 対策</div><div class="item-desc">ネットワーク基礎・ルーティング・試験対策</div></div>
+        </div>
+        <div class="list-item infra planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">基本情報技術者</div><div class="item-desc">試験範囲の整理・頻出問題パターン</div></div>
+        </div>
+        <div class="list-item infra planned">
+          <span class="level level-planned">予定</span>
+          <div class="item-body"><div class="item-title">応用情報技術者</div><div class="item-desc">試験範囲の整理・記述・論述対策</div></div>
+        </div>
+      </div>
+    </div>
+  </details>
 
 </main>
 
 <script>
-  function toggleSection(btn) {
-    btn.classList.toggle('open');
-    btn.nextElementSibling.classList.toggle('open');
-  }
+  // 目次クリックで該当セクションを開く
   document.querySelectorAll('.toc-item').forEach(link => {
     link.addEventListener('click', () => {
       const id = link.getAttribute('href').slice(1);
       const section = document.getElementById(id);
-      if (section) {
-        const btn = section.querySelector('.section-toggle');
-        const body = section.querySelector('.section-body');
-        if (!body.classList.contains('open')) {
-          btn.classList.add('open');
-          body.classList.add('open');
-        }
-      }
+      if (section) section.open = true;
     });
   });
 </script>
